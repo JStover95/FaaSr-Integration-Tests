@@ -3,6 +3,8 @@ from typing import Any
 import boto3
 from botocore.exceptions import ClientError
 
+from framework.utils.throttled_client import ThrottledClient
+
 
 class S3ClientInitializationError(Exception):
     """Exception raised for S3 client initialization errors"""
@@ -39,7 +41,7 @@ class FaaSrS3Client:
             datastore_config = workflow_data["DataStores"][default_datastore]
 
             if datastore_config.get("Endpoint"):
-                self._client = boto3.client(
+                client = boto3.client(
                     "s3",
                     aws_access_key_id=access_key,
                     aws_secret_access_key=secret_key,
@@ -47,13 +49,14 @@ class FaaSrS3Client:
                     endpoint_url=datastore_config["Endpoint"],
                 )
             else:
-                self._client = boto3.client(
+                client = boto3.client(
                     "s3",
                     aws_access_key_id=access_key,
                     aws_secret_access_key=secret_key,
                     region_name=datastore_config["Region"],
                 )
 
+            self._client = ThrottledClient(client)
             self._bucket_name = datastore_config["Bucket"]
 
         except ClientError as e:
