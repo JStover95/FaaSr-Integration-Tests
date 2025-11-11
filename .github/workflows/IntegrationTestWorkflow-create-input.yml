@@ -23,7 +23,8 @@ jobs:
             PAYLOAD_URL: ${{ github.event.inputs.PAYLOAD_URL }}
 
         steps:
-          - name: Run Python entrypoint
-            run: |
-                cd /action
-                python3 faasr_entry.py
+            - name: Run Python entrypoint
+              run: |
+                  pip install git+https://github.com/FaaSr/FaaSr-Backend.git@feature/JStover95/traceback-logging
+                  cd /action
+                  python3 faasr_entry.py
