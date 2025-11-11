@@ -169,5 +169,5 @@
   },
   "LoggingDataStore": "S3",
   "FaaSrLog": "FaaSrLog",
-  "WorkflowName": "IntegrationTestWorkflow"
+  "WorkflowName": "TracebackLoggingTestWorkflow"
 }
