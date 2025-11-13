@@ -207,6 +207,46 @@ git subtree pull \
     <Branch Name>
 ```
 
+## Script Reference
+
+### `register_workflow.sh`
+
+Register a workflow on your repository. This calls the FaaSr-workflow `register_workflow.py` script and immediately pull the latest changes to the remote branch.
+
+**Options:**
+
+- **`-f|--workflow-file`:** The file of the workflow to register.
+- **`-c|--custom-container`:** Allow custom containers.
+- **`-h|--help`:** Show a help message.
+
+**Example usage:**
+
+```bash
+./register-workflow.sh -f workflows/IntegrationTestWorkflow.json
+
+# Register a workflow with custom containers enabled
+./register-workflow.sh -f workflows/IntegrationTestWorkflow.json -c
+```
+
+### `invoke_workflow.sh`
+
+Invoke a workflow and monitor its progress. This calls the testing framework's Workflow Runner directly.
+
+**Options:**
+
+- **`-f|--workflow-file`:** The file of the workflow to invoke.
+- **`-h|--help`:** Show a help message.
+
+**Example usage:**
+
+```bash
+./invoke-workflow.sh -f workflows/IntegrationTestWorkflow.json
+```
+
+### `pull_faasr_workflow.sh`
+
+Pull the latest changes from the upstream FaaSr-workflow repo to the FaaSr-workflow subtree. See [Updating the `FaaSr-workflow` Subtree](#updating-the-faasr-workflow-subtree).
+
 ## Framework Reference
 
 ### [`WorkflowTester`](./integration_tests/conftest.py)
@@ -574,43 +614,3 @@ Events that can be triggered by the FaaSrFunctionLogger
 - **`LOG_CREATED`:** `log_created`
 - **`LOG_UPDATED`:** `log_updated`
 - **`LOG_COMPLETE`:** `log_complete`
-
-## Script Reference
-
-### `register_workflow.sh`
-
-Register a workflow on your repository. This calls the FaaSr-workflow `register_workflow.py` script and immediately pull the latest changes to the remote branch.
-
-**Options:**
-
-- **`-f|--workflow-file`:** The file of the workflow to register.
-- **`-c|--custom-container`:** Allow custom containers.
-- **`-h|--help`:** Show a help message.
-
-**Example usage:**
-
-```bash
-./register-workflow.sh -f workflows/IntegrationTestWorkflow.json
-
-# Register a workflow with custom containers enabled
-./register-workflow.sh -f workflows/IntegrationTestWorkflow.json -c
-```
-
-### `invoke_workflow.sh`
-
-Invoke a workflow and monitor its progress. This calls the testing framework's Workflow Runner directly.
-
-**Options:**
-
-- **`-f|--workflow-file`:** The file of the workflow to invoke.
-- **`-h|--help`:** Show a help message.
-
-**Example usage:**
-
-```bash
-./invoke-workflow.sh -f workflows/IntegrationTestWorkflow.json
-```
-
-### `pull_faasr_workflow.sh`
-
-Pull the latest changes from the upstream FaaSr-workflow repo to the FaaSr-workflow subtree. See [Updating the `FaaSr-workflow` Subtree](#updating-the-faasr-workflow-subtree).
