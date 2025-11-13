@@ -155,6 +155,89 @@ git subtree pull \
 
 ## Framework Reference
 
+### [`WorkflowTester`](./integration_tests/conftest.py)
+
+A tester for a FaaSr workflow.
+
+This class is responsible for:
+
+- Triggering a workflow
+- Cleaning up resources
+- Asserting that objects exist in S3
+- Asserting that objects do not exist in S3
+- Asserting that the content of an object in S3 equals the expected content.
+- Asserting that a function has completed.
+- Asserting that a function has not been invoked.
+
+#### `WorkflowTester.s3_client -> FaaSrS3Client`
+
+Get the workflow runner's S3 client.
+
+#### `WorkflowTester.get_s3_key(self, file_name: str) -> str`
+
+Get the S3 key for a given file name.
+
+**Args:**
+
+- **`file_name`:** The name of the file to get the S3 key for.
+
+**Returns:** The S3 key for the given file name.
+
+#### `WorkflowTester.wait_for(self, function_name: str) -> FunctionStatus`
+
+Wait for a function to complete.
+
+**Args:**
+
+- **`function_name`:** The name of the function to wait for.
+
+**Returns:** The status of the function.
+
+**Raises:**
+
+- **`Exception`:** If the function failed, skipped, timed out, or not invoked.
+
+#### `WorkflowTester.assert_object_exists(self, object_name: str) -> None`
+
+Assert that an object exists in S3.
+
+**Args:**
+
+- **`object_name`:** The name of the object to assert exists.
+
+#### `WorkflowTester.assert_object_does_not_exist(self, object_name: str) -> None`
+
+Assert that an object does not exist in S3.
+
+**Args:**
+
+- **`object_name`:** The name of the object to assert does not exist.
+
+#### `WorkflowTester.assert_content_equals(self, object_name: str, expected_content: str) -> None`
+
+Assert that the content of an object in S3 equals the expected content.
+
+**Args:**
+
+- **`object_name`:** The name of the object to assert the content of.
+- **`expected_content`:** The expected content of the object.
+
+#### `WorkflowTester.assert_function_completed(self, function_name: str) -> None`
+
+Assert that a function has completed.
+
+**Args:**
+
+- **`function_name`:** The name of the function to assert has completed.
+
+#### `WorkflowTester.assert_function_not_invoked(self, function_name: str) -> None`
+
+Assert that a function has not been invoked.
+
+**Args:**
+
+- **`function_name`:** The name of the function to assert has not been invoked.
+
 ### [`WorkflowRunner`](./framework/workflow_runner.py)
 
 Runs a FaaSr workflow and monitors the execution of the functions.
@@ -184,29 +267,29 @@ This class is responsible for:
 
 - **`InitializationError`:** If the environment is not valid.
 
-#### `invocation_id -> str`
+#### `WorkflowRunner.invocation_id -> str`
 
 Get the invocation ID of the workflow.
 
-#### `monitoring_complete -> bool`
+#### `WorkflowRunner.monitoring_complete -> bool`
 
 Check if monitoring is complete (thread-safe).
 
 **Returns:** `True` if monitoring is complete, `False` otherwise.
 
-#### `shutdown_requested -> bool`
+#### `WorkflowRunner.shutdown_requested -> bool`
 
 Check if a shutdown request has been made (thread-safe).
 
 **Returns:** `True` if a shutdown request has been made, `False` otherwise.
 
-#### `get_function_statuses() -> dict[str, FunctionStatus]`
+#### `WorkflowRunner.get_function_statuses() -> dict[str, FunctionStatus]`
 
 Get a copy of function statuses (thread-safe).
 
 **Returns:** A copy of the function statuses.
 
-#### `shutdown(timeout: float = None) -> bool`
+#### `WorkflowRunner.shutdown(timeout: float = None) -> bool`
 
 Attempt to gracefully shutdown the monitoring thread.
 
@@ -216,17 +299,17 @@ Attempt to gracefully shutdown the monitoring thread.
 
 **Returns:** `True` if shutdown was successful, `False` if timeout occurred
 
-#### `force_shutdown() -> None`
+#### `WorkflowRunner.force_shutdown() -> None`
 
 Force shutdown of the monitoring thread.
 
-#### `cleanup() -> None`
+#### `WorkflowRunner.cleanup() -> None`
 
 Comprehensive cleanup of all resources.
 
 This method should be called when the runner is no longer needed.
 
-#### `trigger_workflow(timeout: int, check_interval: int, stream_logs: bool = False) -> WorkflowRunner`
+#### `WorkflowRunner.trigger_workflow(timeout: int, check_interval: int, stream_logs: bool = False) -> WorkflowRunner`
 
 Trigger a workflow and initialize the workflow runner.
 
