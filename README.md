@@ -139,6 +139,60 @@ pytest -s integration_tests/<Path to Your Test File>
 pytest [-v|-vv] integration_tests/<Path to Your Test File>
 ```
 
+## Programmatic Usage
+
+The `WorkflowRunner` class can be used programmatically for more control:
+
+> ℹ️ Note that for the workflow file to be captured by `invoke_workflow.py`, it must be passed as the command line argument `--workflow-file`.
+
+```python
+import argparse
+
+from framework.workflow_runner import WorkflowRunner
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--workflow-file", type=str, required=True)
+args = parser.parse_args()
+
+# Trigger the workflow
+runner = WorkflowRunner.trigger_workflow(
+    timeout=300,
+    check_interval=2,
+    stream_logs=True
+)
+
+# Monitor status changes
+while not runner.is_monitoring_complete():
+    statuses = runner.get_function_statuses()
+    # Process status updates
+    time.sleep(1)
+
+# Cleanup
+runner.cleanup()
+```
+
+### Function Status States
+
+The workflow runner tracks the following function states:
+
+- **`PENDING`**: Waiting to start
+- **`INVOKED`**: Invoked by any function
+- **`NOT_INVOKED`**: Not invoked by any function
+- **`RUNNING`**: Currently executing
+- **`COMPLETED`**: Finished successfully
+- **`FAILED`**: Encountered an error
+- **`SKIPPED`**: Skipped due to upstream failure
+- **`TIMEOUT`**: Was in a non-complete state when the workflow timed out.
+
+### Thread Safety
+
+The Workflow Runner is designed to be thread-safe:
+
+- All status updates and logs are protected by locks
+- Safe for concurrent access from multiple threads
+- Graceful shutdown handling prevents race conditions
+- Clean resource management and cleanup
+
 ## Updating the `FaaSr-workflow` Subtree
 
 The `FaaSr-workflow` repository is included as a git submodule. Changes to the upstream repository can be done automatically with `pull_faasr_workflow.sh`.
