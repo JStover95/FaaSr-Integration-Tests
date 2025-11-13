@@ -7,13 +7,13 @@ HELP_MESSAGE="
 Usage: $0 --f <workflow-file> [-c]
 
 Options:
-  -f|--workflow-file <workflow-file>  Path to the workflow JSON file
-  -c|--custom-container  Allow custom containers
-  -h|--help            Show this help message and exit
+  -f|--workflow-file <workflow-file>    Path to the workflow JSON file
+  -c|--custom-container                 Allow custom containers
+  -h|--help                             Show this help message
 
 Example:
-  $0 --workflow-file IntegrationTestWorkflow.json
-  $0 --workflow-file IntegrationTestWorkflow.json -c
+  $0 --workflow-file workflows/IntegrationTestWorkflow.json
+  $0 --workflow-file workflows/IntegrationTestWorkflow.json -c
 "
 
 while [[ $# -gt 0 ]]; do

@@ -11,7 +11,7 @@ Options:
   -h|--help            Show this help message and exit
 
 Example:
-  $0 --workflow-file IntegrationTestWorkflow.json
+  $0 --workflow-file workflows/IntegrationTestWorkflow.json
 "
 
 while [[ $# -gt 0 ]]; do
