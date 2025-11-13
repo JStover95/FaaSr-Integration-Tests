@@ -62,6 +62,83 @@ When creating your own integration test, it is recommended to follow this patter
 
 When finished, create a pull request. Then, when you contribute your proposed changes, you can link to your pull request on this repo.
 
+## Writing Tests
+
+> ℹ️ Tests are executed in the order they are listed in a file. When possible, it is recommended to write tests for functions in the order you expect the functions to complete.
+
+The testing framework is wrapped in the pytest fixture named `workflow_file`. Use this fixture with a `module` scoped `tester` fixture:
+
+> ⚠️ Using `scope="module"` ensures that the workflow runner is invoked _once_ for the entire test module. Omitting this will result in the workflow runner being re-invoked for every test.
+
+```python
+@pytest.fixture(scope="module", autouse=True)
+def tester(workflow_file):
+    with workflow_file("workflows/IntegrationTestWorkflow.json") as tester:
+        yield tester
+```
+
+You can now use this tester to make assertions against your workflow.
+
+### Test Data Store Outputs
+
+```py
+def test_py_api(tester: WorkflowTester):
+    tester.wait_for("test_py_api")
+
+    # Test that input1 does not exist
+    tester.assert_object_does_not_exist("input1.txt")
+
+    # Test that input2 exists
+    tester.assert_object_exists("input2.txt")
+
+    # Test that input3 matches the expected content
+    tester.assert_content_equals("input3.txt", "content")
+```
+
+### Test Conditional Function Invocations
+
+```py
+# Test that a function was not invoked
+def test_dont_run_on_true(tester: WorkflowTester):
+    tester.wait_for("dont_run_on_true")
+    tester.assert_function_not_invoked("dont_run_on_true")
+
+
+# Test that a function completed
+def test_run_on_true(tester: WorkflowTester):
+    tester.wait_for("run_on_true")
+    tester.assert_function_completed("run_on_true")
+```
+
+### Test Ranked Function Invocations
+
+```py
+# Test for a function with rank 1
+def test_red_1(tester: WorkflowTester):
+    tester.wait_for("test_ranked(1)")
+    tester.assert_function_completed("test_ranked(1)")
+
+
+# Test for a function with rank 2
+def test_ranked_2(tester: WorkflowTester):
+    tester.wait_for("test_ranked(2)")
+    tester.assert_function_completed("test_ranked(2)")
+```
+
+## Running Tests
+
+Tests can either be invoked from the VS Code testing UI or from the command line:
+
+```bash
+pytest integration_tests/<Path to Your Test File>
+
+# Run tests while capturing input, including function logs:
+pytest -s integration_tests/<Path to Your Test File>
+
+# Run tests with verbose output for debugging complex assertions:
+pytest [-v|-vv] integration_tests/<Path to Your Test File>
+```
+
 ## Updating the `FaaSr-workflow` Subtree
 
 The `FaaSr-workflow` repository is included as a git submodule. Changes to the upstream repository can be done automatically with `pull_faasr_workflow.sh`.
