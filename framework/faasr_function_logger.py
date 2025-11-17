@@ -1,4 +1,5 @@
 import logging
+import re
 import threading
 import time
 from enum import Enum
@@ -34,6 +35,8 @@ class FaaSrFunctionLogger:
         stream_logs: Whether to stream the logs to the console.
         interval_seconds: The interval in seconds to check for new logs.
     """
+
+    entry_regex = re.compile(r"\[[\d\.]+?\][\s\S]+?(?=\n\[)|\[[\d\.]+?\][\s\S]+?$")
 
     def __init__(
         self,
@@ -213,7 +216,8 @@ class FaaSrFunctionLogger:
         Returns:
             list[str]: The logs.
         """
-        return self.s3_client.get_object(self.logs_key).strip().split("\n")
+        logs = self.s3_client.get_object(self.logs_key).strip()
+        return self.entry_regex.findall(logs)
 
     def start(self) -> None:
         """Start the FaaSrFunctionLogger."""
