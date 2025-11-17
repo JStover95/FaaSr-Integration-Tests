@@ -1,4 +1,4 @@
-from utils.enums import TracebackLoggingTestValue
+from .utils.enums import TracebackLoggingTestValue
 
 
 def fail_py():
