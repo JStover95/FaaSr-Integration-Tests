@@ -209,3 +209,5 @@ __marimo__/
 .vscode/*
 !.vscode/settings.template.json
 !.vscode/extensions.json
+
+.notes.md
