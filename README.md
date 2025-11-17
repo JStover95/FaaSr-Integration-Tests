@@ -60,6 +60,14 @@ When creating your own integration test, it is recommended to follow this patter
 3. Commit the workflow's schema to the `workflows` directory.
 4. Commit your tests written with `pytest` to the `integration_tests` directory.
 
+After creating your workflow, use the `register-workflow.sh` script to register it with GitHub Actions. For example:
+
+> ℹ️ `-c|--custom-container` is required to register the workflow with custom Docker containers.
+
+```bash
+./register-workflow.sh --workflow-file <Path to Your Workflow File> -c
+```
+
 When finished, create a pull request. Then, when you contribute your proposed changes, you can link to your pull request on this repo.
 
 ## Writing Tests
