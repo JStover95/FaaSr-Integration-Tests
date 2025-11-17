@@ -8,7 +8,7 @@
         "input3": "input3.txt",
         "input4": "input4.txt"
       },
-      "InvokeNext": ["test-py-api", "test-r-api"],
+      "InvokeNext": ["test-py-api"],
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "create_input"
@@ -26,20 +26,6 @@
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "test_py_api"
-    },
-    "test-r-api": {
-      "Arguments": {
-        "folder": "integration-tests",
-        "input4": "input4.txt",
-        "input2": "input2.txt",
-        "input3": "input3.txt",
-        "output1": "output1-R.txt",
-        "output2": "output2-R.txt"
-      },
-      "InvokeNext": ["sync1"],
-      "FaaSServer": "GH",
-      "Type": "R",
-      "FunctionName": "test_r_api"
     },
     "sync1": {
       "Arguments": {
@@ -158,7 +144,6 @@
   "ActionContainers": {
     "create-input": "jessestover/faasr-traceback-logging-python:latest",
     "test-py-api": "jessestover/faasr-traceback-logging-python:latest",
-    "test-r-api": "jessestover/faasr-traceback-logging-r:latest",
     "sync1": "jessestover/faasr-traceback-logging-python:latest",
     "test-run-true": "jessestover/faasr-traceback-logging-python:latest",
     "test-dontrun-false": "jessestover/faasr-traceback-logging-python:latest",
@@ -174,7 +159,6 @@
   "FunctionGitRepo": {
     "create_input": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
     "test_py_api": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
-    "test_r_api": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
     "sync1": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
     "test_run_true": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
     "test_dontrun_false": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
