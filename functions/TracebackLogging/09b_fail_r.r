@@ -1,3 +1,10 @@
 fail_r <- function() {
-    stop("TracebackLogging Test Failure")
+    tryCatch(
+        {
+            stop("inside_exception")
+        },
+        error = function(e) {
+            stop("outside_exception")
+        }
+    )
 }
