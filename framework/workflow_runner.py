@@ -481,7 +481,7 @@ class WorkflowRunner:
             function: The function to handle.
         """
         for function in self._functions.values():
-            if not has_completed(function.status):
+            if not has_final_state(function.status):
                 function.set_status(FunctionStatus.SKIPPED)
                 self.logger.info(
                     f"Skipping function {function.function_name} on failure"
