@@ -208,6 +208,11 @@ class FaaSrFunction:
         return self._logger.logs_complete
 
     @property
+    def logs_started(self) -> bool:
+        """Get the logs started flag (thread-safe)."""
+        return self._logger.logs_started
+
+    @property
     def function_complete(self) -> bool:
         """Get the function complete flag (thread-safe)."""
         return self._check_for_completion()

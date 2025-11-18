@@ -67,6 +67,11 @@ class WorkflowRunner:
     - Starting the monitoring thread
     - Shutting down the monitoring thread
     - Cleaning up the resources
+    - Handling failures by waiting for active loggers to complete before cascading
+
+    When a failure is detected, the runner waits for all loggers of functions that are
+    INVOKED, RUNNING, or FAILED to complete before cascading the failure to pending
+    functions. This ensures complete log information is available for debugging.
 
     Args:
         faasr_payload: The FaaSr payload.
@@ -119,6 +124,9 @@ class WorkflowRunner:
         self._stream_logs = stream_logs
         self._functions: dict[str, FaaSrFunction] = {}
         self._prev_statuses: dict[str, FunctionStatus] = {}
+
+        # Failure handling state
+        self._failure_detected = False
 
         # Initialize S3 client for monitoring
         self.s3_client = FaaSrS3Client(
@@ -292,6 +300,17 @@ class WorkflowRunner:
         with self._status_lock:
             self._shutdown_requested = True
 
+    @property
+    def failure_detected(self) -> bool:
+        """Get the failure detected status (thread-safe)."""
+        with self._status_lock:
+            return self._failure_detected
+
+    def _set_failure_detected(self) -> None:
+        """Set the failure detected status to True (thread-safe)."""
+        with self._status_lock:
+            self._failure_detected = True
+
     #######################
     # Workflow monitoring #
     #######################
@@ -330,13 +349,12 @@ class WorkflowRunner:
         - Checks the completion status for each function.
         - Starts a function instance if the function has run and no instance exists.
         - Handles changes in each function status.
+        - When a failure is detected, waits for all active loggers to complete.
         - Cascades a failure to all pending functions when any function fails.
 
         Raises:
-            StopMonitoring: If all functions have successfully completed or a failure has been detected.
+            StopMonitoring: If all functions have successfully completed or a failure has been detected and all active loggers are complete.
         """
-        workflow_failed = False
-
         # Check completion status for each function
         for function in self._functions.values():
             if pending(function.status):
@@ -345,17 +363,34 @@ class WorkflowRunner:
                 self._log_status_change(function)
                 self._prev_statuses[function.function_name] = function.status
             if failed(function.status):
-                workflow_failed = True
-                break
+                # First failure detected - set flag and log
+                if not self.failure_detected:
+                    self._set_failure_detected()
+                    self.logger.info(
+                        f"Failure detected in function {function.function_name}. "
+                        f"Waiting for active loggers to complete..."
+                    )
 
         if self._all_functions_completed():
             self.logger.info("All functions completed")
             raise StopMonitoring("All functions completed")
 
-        # Cascade failed status to all pending functions
-        if workflow_failed:
-            self._cascade_failure()
-            raise StopMonitoring("Failure detected")
+        # If failure detected, wait for active loggers to complete
+        if self.failure_detected:
+            active_functions = self._get_active_functions()
+            if not active_functions:
+                self.logger.info(
+                    "All active functions have logs complete. Cascading failure..."
+                )
+                self._cascade_failure()
+                raise StopMonitoring(
+                    "Failure detected and all active loggers completed"
+                )
+            else:
+                # Still waiting for loggers - continue monitoring
+                self.logger.debug(
+                    f"Waiting for loggers to complete: {', '.join([f.function_name for f in active_functions])}"
+                )
 
     ######################
     # Monitoring helpers #
@@ -397,6 +432,19 @@ class WorkflowRunner:
         return all(
             has_completed(function.status) for function in self._functions.values()
         )
+
+    def _get_active_functions(self) -> list[FaaSrFunction]:
+        """
+        Get all functions that have logs started and are not complete.
+
+        Returns:
+            list[FaaSrFunction]: List of active functions
+        """
+        active = []
+        for function in self._functions.values():
+            if not (function.logs_complete or has_final_state(function.status)):
+                active.append(function)
+        return active
 
     def _finish_monitoring(self) -> None:
         """
