@@ -1,9 +1,11 @@
-from typing import Any
+import queue
+from typing import Any, Callable, ParamSpec, TypeVar
 
 import boto3
 from botocore.exceptions import ClientError
 
-from framework.utils.throttled_client import ThrottledClient
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 class S3ClientInitializationError(Exception):
@@ -46,6 +48,9 @@ class FaaSrS3Client:
         `S3ClientInitializationError`: If the S3 client initialization fails.
     """
 
+    default_queue_size = 10
+    default_timeout = 20
+
     def __init__(
         self,
         *,
@@ -58,7 +63,7 @@ class FaaSrS3Client:
             datastore_config = workflow_data["DataStores"][default_datastore]
 
             if datastore_config.get("Endpoint"):
-                client = boto3.client(
+                self._client = boto3.client(
                     "s3",
                     aws_access_key_id=access_key,
                     aws_secret_access_key=secret_key,
@@ -66,14 +71,13 @@ class FaaSrS3Client:
                     endpoint_url=datastore_config["Endpoint"],
                 )
             else:
-                client = boto3.client(
+                self._client = boto3.client(
                     "s3",
                     aws_access_key_id=access_key,
                     aws_secret_access_key=secret_key,
                     region_name=datastore_config["Region"],
                 )
 
-            self._client = ThrottledClient(client)
             self._bucket_name = datastore_config["Bucket"]
 
         except ClientError as e:
@@ -82,6 +86,13 @@ class FaaSrS3Client:
             raise S3ClientInitializationError(f"Key error: {e}") from e
         except Exception as e:
             raise S3ClientInitializationError(f"Unhandled error: {e}") from e
+
+        self._queue = queue.Queue(maxsize=self.default_queue_size)
+        self._timeout = self.default_timeout
+
+        # Initialize the queue with a token for each allowed concurrent request
+        for _ in range(self.default_queue_size):
+            self._queue.put(object())
 
     def object_exists(self, key: str) -> bool:
         """
@@ -96,14 +107,7 @@ class FaaSrS3Client:
         Raises:
             S3ClientError: If an error occurs.
         """
-        try:
-            self._client.head_object(Bucket=self._bucket_name, Key=key)
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "404":
-                return False
-            else:
-                raise S3ClientError(f"Error checking object existence: {e}") from e
-        return True
+        return self._call(self._object_exists, key)
 
     def get_object(self, key: str, encoding: str = "utf-8") -> str:
         """
@@ -119,6 +123,19 @@ class FaaSrS3Client:
         Raises:
             S3ClientError: If the object does not exist or an error occurs.
         """
+        return self._call(self._get_object, key, encoding)
+
+    def _object_exists(self, key: str) -> bool:
+        try:
+            self._client.head_object(Bucket=self._bucket_name, Key=key)
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                return False
+            else:
+                raise S3ClientError(f"Error checking object existence: {e}") from e
+        return True
+
+    def _get_object(self, key: str, encoding: str = "utf-8") -> str:
         try:
             return (
                 self._client.get_object(Bucket=self._bucket_name, Key=key)["Body"]
@@ -131,3 +148,19 @@ class FaaSrS3Client:
             raise S3ClientError(f"boto3 client error getting object: {e}") from e
         except Exception as e:
             raise S3ClientError(f"Unhandled error getting object: {e}") from e
+
+    def _call(self, func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
+        """
+        Call the underlying client method and return the result. This pulls a token from
+        the queue, blocking until one is available.
+
+        Args:
+            func: The function to call.
+            args: The arguments to pass to the function.
+            kwargs: The keyword arguments to pass to the function.
+        """
+        token = self._queue.get(timeout=self._timeout)
+        try:
+            return func(*args, **kwargs)
+        finally:
+            self._queue.put(token)
