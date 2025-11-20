@@ -1,8 +1,31 @@
 import os
-from typing import Generator
+from typing import Any, Generator
 
+import boto3
 import pytest
 from moto import mock_aws
+from mypy_boto3_s3.client import S3Client
+
+DATASTORE_ENDPOINT = "http://localhost:5000"
+DATASTORE_BUCKET = "testing"
+DATASTORE_REGION = "us-east-1"
+
+
+def datastore_config() -> dict[str, Any]:
+    return {
+        "Endpoint": DATASTORE_ENDPOINT,
+        "Bucket": DATASTORE_BUCKET,
+        "Region": DATASTORE_REGION,
+    }
+
+
+def workflow_data() -> dict[str, Any]:
+    return {
+        "DefaultDataStore": "S3",
+        "DataStores": {
+            "S3": datastore_config(),
+        },
+    }
 
 
 @pytest.fixture(scope="session")
@@ -30,3 +53,8 @@ def with_mock_env() -> Generator[None]:
 def with_mock_aws(with_mock_env: None) -> Generator[None]:
     with mock_aws():
         yield
+
+
+@pytest.fixture(scope="session")
+def s3_client(with_mock_aws: None) -> S3Client:
+    return boto3.client("s3", endpoint_url=DATASTORE_ENDPOINT)
