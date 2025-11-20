@@ -87,7 +87,31 @@ def tester(workflow_file):
 
 You can now use this tester to make assertions against your workflow.
 
-### Test Data Store Outputs
+### Waiting for Function Completion
+
+The `tester.wait_for` function will wait until your function either reaches a **Not Invoked** or **Completed** state. For cases when it is necessary to test some behavior on function failure, you can optionally pass `should_fail=True` to wait for your function to reach a **Failed** state.
+
+### Assertion Functions
+
+The `tester` fixture has the following assertion functions that you can use to test the function's state or output:
+
+- **`assert_object_exists(object_name: str)`:** Assert that an object exists in S3.
+
+- **`assert_object_does_not_exist(object_name: str)`:** Assert that an object does not exist in S3.
+
+- **`assert_content_equals(object_name: str, expected_content: str)`:** Assert that the content of an object in S3 equals the expected content.
+
+- **`assert_logs_contain(function_name: str, expected_content: str)`:** Assert that the logs of a function contain the expected content.
+
+- **`assert_function_completed(function_name: str)`:** Assert that a function has completed.
+
+- **`assert_function_not_invoked(function_name: str)`:** Assert that a function has not been invoked.
+
+- **`assert_function_failed(function_name: str)`:** Assert that a function has failed.
+
+### Test Examples
+
+#### Test Data Store Outputs
 
 ```py
 def test_py_api(tester: WorkflowTester):
@@ -103,7 +127,16 @@ def test_py_api(tester: WorkflowTester):
     tester.assert_content_equals("input3.txt", "content")
 ```
 
-### Test Conditional Function Invocations
+#### Test Log Outputs
+
+```python
+# Test that some text exists in the function logs
+def test_log_outputs(tester: WorkflowTester):
+    tester.wait_for("test_logs_function")
+    tester.assert_logs_contain("test_logs_function", "Test log output")
+```
+
+#### Test Conditional Function Invocations
 
 ```py
 # Test that a function was not invoked
@@ -118,11 +151,11 @@ def test_run_on_true(tester: WorkflowTester):
     tester.assert_function_completed("run_on_true")
 ```
 
-### Test Ranked Function Invocations
+#### Test Ranked Function Invocations
 
 ```py
 # Test for a function with rank 1
-def test_red_1(tester: WorkflowTester):
+def test_ranked_1(tester: WorkflowTester):
     tester.wait_for("test_ranked(1)")
     tester.assert_function_completed("test_ranked(1)")
 
@@ -131,6 +164,15 @@ def test_red_1(tester: WorkflowTester):
 def test_ranked_2(tester: WorkflowTester):
     tester.wait_for("test_ranked(2)")
     tester.assert_function_completed("test_ranked(2)")
+```
+
+#### Test Failure States
+
+```py
+# Test any expected behavior on function failure
+def test_failure(tester: WorkflowTester):
+    tester.wait_for("test_failure_function", should_fail=True)
+    tester.assert_logs_contain("test_failure_function", "Custom exception")
 ```
 
 ## Running Tests
