@@ -56,7 +56,7 @@ class FaaSrFunctionLogger:
         self.interval_seconds = interval_seconds
 
         # Setup logger
-        self.logger_name = f"FaaSrFunctionLogger-{function_name}"
+        self.logger_name = function_name
         self.logger = self._setup_logger()
 
         # Log storage
