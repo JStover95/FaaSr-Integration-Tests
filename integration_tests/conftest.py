@@ -149,6 +149,16 @@ class WorkflowTester:
         key = self.get_s3_key(object_name)
         assert self.s3_client.get_object(key) == expected_content
 
+    def assert_logs_contain(self, function_name: str, expected_content: str) -> None:
+        """
+        Assert that the logs of a function contain the expected content.
+
+        Args:
+            function_name: The name of the function to assert the logs of.
+            expected_content: The expected content of the logs.
+        """
+        assert expected_content in self.runner.get_function_logs_content(function_name)
+
     def assert_function_completed(self, function_name: str) -> None:
         """
         Assert that a function has completed.
@@ -171,6 +181,17 @@ class WorkflowTester:
         assert (
             self.runner.get_function_statuses()[function_name]
             == FunctionStatus.NOT_INVOKED
+        )
+
+    def assert_function_failed(self, function_name: str) -> None:
+        """
+        Assert that a function has failed.
+
+        Args:
+            function_name: The name of the function to assert has failed.
+        """
+        assert (
+            self.runner.get_function_statuses()[function_name] == FunctionStatus.FAILED
         )
 
 
