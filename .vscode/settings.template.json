@@ -8,7 +8,7 @@
     "editor.defaultFormatter": "charliermarsh.ruff"
   },
 
-  "python.testing.pytestArgs": ["integration_tests"],
+  "python.testing.pytestArgs": ["integration_tests", "tests"],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
   "python.envFile": "${workspaceFolder}/.env",
