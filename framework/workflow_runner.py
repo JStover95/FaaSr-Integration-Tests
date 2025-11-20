@@ -37,6 +37,12 @@ REQUIRED_ENV_VARS = [
     "GITHUB_REF_NAME",
 ]
 
+# Remove the existing logging handlers from the root logger
+root_logger = logging.getLogger()
+for handler in root_logger.handlers[:]:
+    root_logger.removeHandler(handler)
+    handler.close()
+
 
 class InitializationError(Exception):
     """Exception raised for WorkflowRunner initialization errors"""
@@ -172,6 +178,7 @@ class WorkflowRunner:
         handler.setFormatter(formatter)
         logger.addHandler(handler)
         logger.setLevel(logging.INFO)
+
         return logger
 
     def _build_reverse_adjacency_graph(self) -> dict[str, set[str]]:
