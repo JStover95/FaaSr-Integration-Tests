@@ -143,7 +143,7 @@ class FaaSrS3Client:
                 .decode(encoding)
             )
         except ClientError as e:
-            if e.response["Error"]["Code"] == "404":
+            if e.response["Error"]["Code"] == "NoSuchKey":
                 raise S3ClientError(f"Object does not exist: {e}") from e
             raise S3ClientError(f"boto3 client error getting object: {e}") from e
         except Exception as e:
