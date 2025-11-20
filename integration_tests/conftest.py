@@ -85,7 +85,7 @@ class WorkflowTester:
         """
         return f"integration-tests/{self.runner.invocation_id}/{file_name}"
 
-    def wait_for(self, function_name: str) -> FunctionStatus:
+    def wait_for(self, function_name: str, should_fail: bool = False) -> FunctionStatus:
         """
         Wait for a function to complete.
 
@@ -109,7 +109,7 @@ class WorkflowTester:
             time.sleep(CHECK_INTERVAL)
             status = self.runner.get_function_statuses()[function_name]
 
-        if status == FunctionStatus.FAILED:
+        if not should_fail and status == FunctionStatus.FAILED:
             raise Exception(f"Function {function_name} failed")
         elif status == FunctionStatus.SKIPPED:
             raise Exception(f"Function {function_name} skipped")
