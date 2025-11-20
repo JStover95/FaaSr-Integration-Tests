@@ -268,6 +268,16 @@ class WorkflowRunner:
                 for function in self._functions.values()
             }
 
+    def get_function_logs_content(self, function_name: str) -> str:
+        """
+        Get the logs content of a function.
+
+        Returns:
+            str: The logs content of the function.
+        """
+        with self._status_lock:
+            return self._functions[function_name].logs_content
+
     @property
     def monitoring_complete(self) -> bool:
         """
