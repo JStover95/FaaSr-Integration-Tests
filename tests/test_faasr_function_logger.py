@@ -383,7 +383,7 @@ class TestFaaSrFunctionLoggerThreadManagement:
         assert logger._thread.daemon is True
 
         logger.stop()
-        time.sleep(0.2)  # Wait for thread to stop
+        logger.wait(timeout=2.0)  # Wait for thread to stop
 
     def test_stop(self, s3_client_fixture: FaaSrS3Client):
         """Test stop method sets stop flag"""
@@ -397,6 +397,84 @@ class TestFaaSrFunctionLoggerThreadManagement:
         assert logger.stop_requested is False
         logger.stop()
         assert logger.stop_requested is True
+
+    def test_wait_with_timeout(self, s3_client_fixture: FaaSrS3Client):
+        """Test wait method with timeout"""
+        logger = FaaSrFunctionLogger(
+            function_name="test_function",
+            workflow_name="test_workflow",
+            invocation_folder="test/invocation",
+            s3_client=s3_client_fixture,
+            interval_seconds=0.1,
+        )
+
+        logger.start()
+        assert logger._thread is not None
+        assert logger._thread.is_alive()
+
+        # Wait with timeout - should complete
+        start_time = time.time()
+        logger.stop()
+        logger.wait(timeout=2.0)
+        elapsed = time.time() - start_time
+
+        # Should have waited but not exceeded timeout
+        assert elapsed < 2.0
+        assert not logger._thread.is_alive()
+
+    def test_wait_without_timeout(self, s3_client_fixture: FaaSrS3Client):
+        """Test wait method without timeout (indefinite wait)"""
+        logger = FaaSrFunctionLogger(
+            function_name="test_function",
+            workflow_name="test_workflow",
+            invocation_folder="test/invocation",
+            s3_client=s3_client_fixture,
+            interval_seconds=0.1,
+        )
+
+        logger.start()
+        assert logger._thread is not None
+
+        # Stop immediately and wait without timeout
+        logger.stop()
+        start_time = time.time()
+        logger.wait(timeout=None)
+        elapsed = time.time() - start_time
+
+        # Should have waited for thread to finish
+        assert elapsed < 1.0  # Should complete quickly after stop
+        assert not logger._thread.is_alive()
+
+    def test_wait_when_thread_none(self, s3_client_fixture: FaaSrS3Client):
+        """Test wait method when thread is None"""
+        logger = FaaSrFunctionLogger(
+            function_name="test_function",
+            workflow_name="test_workflow",
+            invocation_folder="test/invocation",
+            s3_client=s3_client_fixture,
+        )
+
+        # Thread is None, wait should return immediately
+        logger.wait(timeout=1.0)
+        # Should not raise or block
+
+    def test_wait_when_thread_not_alive(self, s3_client_fixture: FaaSrS3Client):
+        """Test wait method when thread is not alive"""
+        logger = FaaSrFunctionLogger(
+            function_name="test_function",
+            workflow_name="test_workflow",
+            invocation_folder="test/invocation",
+            s3_client=s3_client_fixture,
+            interval_seconds=0.1,
+        )
+
+        logger.start()
+        logger.stop()
+        logger.wait(timeout=2.0)  # Wait for thread to finish
+
+        # Thread is no longer alive, wait should return immediately
+        assert not logger._thread.is_alive()
+        logger.wait(timeout=1.0)  # Should return immediately
 
 
 class TestFaaSrFunctionLoggerRunLoop:
@@ -436,7 +514,7 @@ class TestFaaSrFunctionLoggerRunLoop:
         time.sleep(0.3)
 
         logger.stop()
-        time.sleep(0.2)
+        logger.wait(timeout=2.0)
 
         assert logger.logs_started is True
         assert LogEvent.LOG_CREATED in callback_events
@@ -482,7 +560,7 @@ class TestFaaSrFunctionLoggerRunLoop:
         time.sleep(0.3)
 
         logger.stop()
-        time.sleep(0.2)
+        logger.wait(timeout=2.0)
 
         assert len(logger.logs) >= 1
         assert LogEvent.LOG_UPDATED in callback_events
@@ -519,13 +597,13 @@ class TestFaaSrFunctionLoggerRunLoop:
 
         # Stop and wait for completion
         logger.stop()
-        time.sleep(0.3)
+        logger.wait(timeout=2.0)
 
         assert logger.logs_complete is True
         assert LogEvent.LOG_COMPLETE in callback_events
 
     def test_run_with_stream_logs(
-        self, s3_client: S3Client, s3_client_fixture: FaaSrS3Client, caplog
+        self, s3_client: S3Client, s3_client_fixture: FaaSrS3Client
     ):
         """Test run loop streams logs when enabled"""
         s3_client.create_bucket(Bucket=DATASTORE_BUCKET)
@@ -547,7 +625,7 @@ class TestFaaSrFunctionLoggerRunLoop:
         logger.start()
         time.sleep(0.3)
         logger.stop()
-        time.sleep(0.2)
+        logger.wait(timeout=2.0)
 
         # Check that logs were streamed (via logger)
         assert len(logger.logs) > 0
@@ -573,3 +651,39 @@ class TestFaaSrFunctionLoggerRunLoop:
 
         # Should have 50 logs total (5 threads * 10 logs each)
         assert len(logger.logs) == 50
+
+    def test_run_stops_before_logs_start(
+        self, s3_client: S3Client, s3_client_fixture: FaaSrS3Client
+    ):
+        """Test run loop stops early when stop requested before logs start"""
+        s3_client.create_bucket(Bucket=DATASTORE_BUCKET)
+
+        logger = FaaSrFunctionLogger(
+            function_name="test_function",
+            workflow_name="test_workflow",
+            invocation_folder="test/invocation",
+            s3_client=s3_client_fixture,
+            interval_seconds=0.1,
+        )
+
+        callback_events = []
+
+        def callback(event: LogEvent) -> None:
+            callback_events.append(event)
+
+        logger.register_callback(callback)
+        logger.start()
+
+        # Stop immediately before logs appear
+        time.sleep(0.1)  # Give thread a moment to start
+        logger.stop()
+
+        # Wait for thread to finish
+        logger.wait(timeout=2.0)
+
+        # Should have completed without logs starting
+        assert logger.logs_started is False
+        assert logger.logs_complete is True
+        assert LogEvent.LOG_COMPLETE in callback_events
+        assert LogEvent.LOG_CREATED not in callback_events
+        assert logger.logs == []
