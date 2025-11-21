@@ -2,16 +2,27 @@
 
 This document describes strategies for mocking external services and error states in tests.
 
-## Using Moto for AWS Service Mocking
+## Using External AWS Service Mocking
 
-Use the moto mocked S3 client to create test buckets and data. This provides a realistic AWS-like interface without actual AWS calls.
+Use an externally hosted mocked AWS service (moto) at `localhost:5000` to create test buckets and data. This provides a realistic AWS-like interface without actual AWS calls. The mock service is automatically reset after each test to ensure test isolation.
 
-### Using Moto for AWS Service Mocking - Pattern
+### External AWS Service Mocking - Pattern
 
 ```python
 # conftest.py
+DATASTORE_ENDPOINT = "http://localhost:5000"
+
+@pytest.fixture()
+def with_mock_aws(with_mock_env: None) -> Generator[None]:
+    """Reset external mock AWS service after each test"""
+    try:
+        yield
+    finally:
+        requests.post(f"{DATASTORE_ENDPOINT}/moto-api/reset")
+
 @pytest.fixture()
 def s3_client(with_mock_aws: None) -> S3Client:
+    """S3 client pointing to external mock service"""
     return boto3.client("s3", endpoint_url=DATASTORE_ENDPOINT)
 
 # test_file.py
@@ -31,18 +42,19 @@ def test_object_exists_true(self, s3_client: S3Client):
     assert client.object_exists("test_key") is True
 ```
 
-### Using Moto for AWS Service Mocking - Benefits
+### External AWS Service Mocking - Benefits
 
 - **Realistic**: Uses actual boto3 client interface
-- **Fast**: No network calls, all in-memory
-- **Isolated**: Tests don't affect real AWS resources
+- **Fast**: No network calls to real AWS, all handled by local mock service
+- **Isolated**: Tests don't affect real AWS resources, and each test starts with a clean state
 - **Comprehensive**: Supports most AWS S3 operations
+- **Automatic Cleanup**: Resources are automatically reset after each test via the `with_mock_aws` fixture
 
 ### Example: Complete S3 Workflow
 
 ```python
 def test_s3_workflow(s3_client: S3Client):
-    """Test complete S3 workflow with moto"""
+    """Test complete S3 workflow with external mock service"""
     # Create bucket
     s3_client.create_bucket(Bucket="test-bucket")
     
@@ -228,16 +240,16 @@ def test_error_case(self):
         client.get_object("test_key")
 ```
 
-## Combining Moto and Direct Mocking
+## Combining External Mocking and Direct Mocking
 
-You can combine moto for normal operations and direct mocking for error cases.
+You can combine the external mock AWS service for normal operations and direct mocking for error cases.
 
 ### Pattern
 
 ```python
 def test_normal_and_error_paths(self, s3_client: S3Client):
     """Test both normal and error paths"""
-    # Use moto for normal operations
+    # Use external mock service for normal operations
     s3_client.create_bucket(Bucket="test-bucket")
     s3_client.put_object(
         Bucket="test-bucket",
