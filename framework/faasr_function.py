@@ -37,6 +37,7 @@ class FaaSrFunction:
         s3_client: FaaSrS3Client,
         stream_logs: bool = False,
         interval_seconds: int = 3,
+        start_logger: bool = True,
     ):
         self.function_name = function_name
         self.workflow_name = workflow_name
@@ -64,7 +65,9 @@ class FaaSrFunction:
 
         # Register callbacks with logger
         self._logger.register_callback(self._on_log_event)
-        self._logger.start()
+
+        if start_logger:
+            self._logger.start()
 
     @property
     def status(self) -> FunctionStatus:
@@ -146,10 +149,12 @@ class FaaSrFunction:
         if self._check_for_failure():
             self.set_status(FunctionStatus.FAILED)
             self._logger.stop()
+            self._logger.wait(timeout=2.0)
         # Check for completion
         elif self._check_for_completion():
             self.set_status(FunctionStatus.COMPLETED)
             self._logger.stop()
+            self._logger.wait(timeout=2.0)
 
     def _handle_log_complete(self) -> None:
         """Handle when logs are complete."""
