@@ -300,3 +300,9 @@ Pull the latest changes from the upstream FaaSr-workflow repo to the FaaSr-workf
 ## Design Documentation
 
 This repository includes [design documentation](./docs/design-docs.md) that is intended to be a single source of truth for design patterns. The design documentation should be amended regularly to document design choices that should be observed in future contributions.
+
+## Unit Tests
+
+This repo includes unit tests for the testing framework that are written in [`tests/`](./tests/). Running unit tests requires [moto](https://docs.getmoto.org/en/latest/index.html) to be run in server mode, either using Docker or Homebrew. See the [moto documentation](https://docs.getmoto.org/en/latest/docs/server_mode.html#run-using-docker) for more details.
+
+For details on how moto is used for unit tests, refer to the [Mocking Strategies](./docs/testing/mocking-strategies.md) design doc.
