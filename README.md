@@ -296,3 +296,7 @@ Invoke a workflow and monitor its progress. This calls the testing framework's W
 ### `pull_faasr_workflow.sh`
 
 Pull the latest changes from the upstream FaaSr-workflow repo to the FaaSr-workflow subtree. See [Updating the `FaaSr-workflow` Subtree](#updating-the-faasr-workflow-subtree).
+
+## Design Documentation
+
+This repository includes [design documentation](./docs/design-docs.md) that is intended to be a single source of truth for design patterns. The design documentation should be amended regularly to document design choices that should be observed in future contributions.
