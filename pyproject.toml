@@ -16,5 +16,4 @@ faasr-py = { git = "https://github.com/FaaSr/FaaSr-Backend.git" }
 [dependency-groups]
 dev = [
     "boto3-stubs[s3]>=1.40.70",
-    "moto[s3]>=5.1.17",
 ]
