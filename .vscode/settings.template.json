@@ -15,5 +15,5 @@
   "python.terminal.activateEnvInCurrentTerminal": true,
   "editor.rulers": [88],
 
-  "cSpell.words": ["faasr"]
+  "cSpell.words": ["faasr", "moto", "pytest"]
 }
