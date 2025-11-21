@@ -229,6 +229,16 @@ class FaaSrFunctionLogger:
         with self._lock:
             self._stop_requested = True
 
+    def wait(self, timeout: float | None = None) -> None:
+        """
+        Wait for the logger thread to finish.
+
+        Args:
+            timeout: Maximum time to wait in seconds. If None, wait indefinitely.
+        """
+        if self._thread is not None and self._thread.is_alive():
+            self._thread.join(timeout=timeout)
+
     def _run(self) -> None:
         """
         Run the main logging loop.
@@ -243,11 +253,16 @@ class FaaSrFunctionLogger:
         If `stream_logs` is True, this will also log the logs to the console.
         """
         while not self.logs_complete:
-            if not self.logs_started:
-                if self._check_for_logs():
-                    self._set_logs_started()
-                    self._call_callbacks(LogEvent.LOG_CREATED)
-            else:
+            # Handle stop requested when logs have not started
+            if not self.logs_started and self.stop_requested:
+                self._set_logs_complete()
+                self._call_callbacks(LogEvent.LOG_COMPLETE)
+                break
+
+            if not self.logs_started and self._check_for_logs():
+                self._set_logs_started()
+                self._call_callbacks(LogEvent.LOG_CREATED)
+            elif self.logs_started:
                 log_content = self._get_logs()
                 num_existing_logs = len(self.logs)
                 new_logs = log_content[num_existing_logs:]
