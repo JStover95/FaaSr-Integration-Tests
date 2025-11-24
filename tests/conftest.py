@@ -6,7 +6,10 @@ from typing import Any, Generator
 import boto3
 import pytest
 import requests
+from dotenv import load_dotenv
 from mypy_boto3_s3.client import S3Client
+
+load_dotenv()
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -41,10 +44,23 @@ def action_list() -> dict[str, Any]:
             "FaaSServer": "GH",
             "FunctionName": "func2",
             "Type": "Python",
+            "InvokeNext": ["func4"],
         },
         "func3": {
             "FaaSServer": "GH",
             "FunctionName": "func3",
+            "Type": "Python",
+            "InvokeNext": ["func4"],
+        },
+        "func4": {
+            "FaaSServer": "GH",
+            "FunctionName": "func4",
+            "Type": "Python",
+            "InvokeNext": ["func5(3)"],
+        },
+        "func5": {
+            "FaaSServer": "GH",
+            "FunctionName": "func5",
             "Type": "Python",
         },
     }
