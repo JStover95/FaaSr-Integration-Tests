@@ -374,11 +374,6 @@ class WorkflowRunner:
         """
         # Check completion status for each function
         for function in self._functions.values():
-            if pending(function.status):
-                self._handle_pending(function)
-            if self._prev_statuses[function.function_name] != function.status:
-                self._log_status_change(function)
-                self._prev_statuses[function.function_name] = function.status
             if failed(function.status):
                 # First failure detected - set flag and log
                 if not self.failure_detected:
@@ -387,12 +382,11 @@ class WorkflowRunner:
                         f"Failure detected in function {function.function_name}. "
                         f"Waiting for active loggers to complete..."
                     )
+            if self._prev_statuses[function.function_name] != function.status:
+                self._log_status_change(function)
+                self._prev_statuses[function.function_name] = function.status
 
-        if self._all_functions_completed():
-            self.logger.info("All functions completed")
-            raise StopMonitoring("All functions completed")
-
-        # If failure detected, wait for active loggers to complete
+        # If failure detected, wait for active loggers to complete before handling pending
         if self.failure_detected:
             active_functions = self._get_active_functions()
             if not active_functions:
@@ -408,6 +402,18 @@ class WorkflowRunner:
                 self.logger.debug(
                     f"Waiting for loggers to complete: {', '.join([f.function_name for f in active_functions])}"
                 )
+
+        # Handle pending functions (only if no failure detected or still waiting for loggers)
+        for function in self._functions.values():
+            if pending(function.status):
+                self._handle_pending(function)
+                if self._prev_statuses[function.function_name] != function.status:
+                    self._log_status_change(function)
+                    self._prev_statuses[function.function_name] = function.status
+
+        if self._all_functions_completed():
+            self.logger.info("All functions completed")
+            raise StopMonitoring("All functions completed")
 
     ######################
     # Monitoring helpers #
@@ -538,14 +544,14 @@ class WorkflowRunner:
         Returns:
             bool: True if shutdown was successful, False if timeout occurred
         """
+        # Always set shutdown requested, even if thread is not alive
+        self._set_shutdown_requested()
+
         if not self._monitoring_thread or not self._monitoring_thread.is_alive():
             return True
 
         if self._monitoring_thread and self._monitoring_thread.is_alive():
             self.logger.info("Requesting graceful shutdown of monitoring thread...")
-
-            # Signal shutdown request
-            self._set_shutdown_requested()
 
             # Wait for thread to finish gracefully
             wait_timeout = timeout if timeout is not None else self._cleanup_timeout
@@ -639,10 +645,11 @@ class WorkflowRunner:
         Yields:
             str: The rank of the function (e.g. "function(1)", "function(2)", etc.)
         """
-        if self.ranks[function_name] <= 1:
+        rank_value = self.ranks.get(function_name, 1)
+        if rank_value <= 1:
             yield function_name
         else:
-            for rank in range(1, self.ranks[function_name] + 1):
+            for rank in range(1, rank_value + 1):
                 yield f"{function_name}({rank})"
 
     def _check_invocation_status(self, function: FaaSrFunction) -> InvocationStatus:
