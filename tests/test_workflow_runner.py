@@ -6,6 +6,7 @@ import pytest
 
 from framework.s3_client import FaaSrS3Client
 from framework.utils.enums import FunctionStatus, InvocationStatus
+from framework.utils.utils import has_final_state
 from framework.workflow_runner import (
     REQUIRED_ENV_VARS,
     InitializationError,
@@ -70,7 +71,7 @@ class TestWorkflowRunnerInit:
         assert runner._prev_statuses == {}
         assert runner._failure_detected is False
 
-    @pytest.parametrize("env_var", REQUIRED_ENV_VARS)
+    @pytest.mark.parametrize("env_var", REQUIRED_ENV_VARS)
     def test_init_missing_env_vars(self, env_var: str, with_mock_env: None):
         """Test initialization fails with missing environment variables"""
         # Save original env
@@ -124,10 +125,14 @@ class TestWorkflowRunnerFunctionBuilding:
         functions = mock_workflow_runner._build_functions(stream_logs=False)
 
         # Should have functions for func1, func2, func3
-        assert len(functions) == 3
+        assert len(functions) == 7
         assert "func1" in functions
         assert "func2" in functions
         assert "func3" in functions
+        assert "func4" in functions
+        assert "func5(1)" in functions
+        assert "func5(2)" in functions
+        assert "func5(3)" in functions
 
         # func1 should be INVOKED
         assert functions["func1"].status == FunctionStatus.INVOKED
@@ -135,31 +140,10 @@ class TestWorkflowRunnerFunctionBuilding:
         # func2 and func3 should be PENDING
         assert functions["func2"].status == FunctionStatus.PENDING
         assert functions["func3"].status == FunctionStatus.PENDING
-
-    def test_build_functions_with_ranks(self, s3_client_fixture: FaaSrS3Client):
-        """Test building functions with ranks"""
-        # Create payload with ranked function
-        payload = workflow_data()
-        payload["ActionList"]["ranked_func"] = {
-            "FaaSServer": "GH",
-            "FunctionName": "ranked_func",
-            "Type": "Python",
-            "Rank": 3,
-        }
-
-        runner = WorkflowRunner(
-            faasr_payload=payload,
-            timeout=120,
-            check_interval=1,
-        )
-        runner.s3_client = s3_client_fixture
-
-        functions = runner._build_functions(stream_logs=False)
-
-        # Should have ranked functions
-        assert "ranked_func(1)" in functions
-        assert "ranked_func(2)" in functions
-        assert "ranked_func(3)" in functions
+        assert functions["func4"].status == FunctionStatus.PENDING
+        assert functions["func5(1)"].status == FunctionStatus.PENDING
+        assert functions["func5(2)"].status == FunctionStatus.PENDING
+        assert functions["func5(3)"].status == FunctionStatus.PENDING
 
 
 class TestWorkflowRunnerStatusManagement:
@@ -305,6 +289,16 @@ class TestWorkflowRunnerMonitoring:
         mock_workflow_runner._functions["func1"].with_status(FunctionStatus.COMPLETED)
         mock_workflow_runner._functions["func2"].with_status(FunctionStatus.NOT_INVOKED)
         mock_workflow_runner._functions["func3"].with_status(FunctionStatus.COMPLETED)
+        mock_workflow_runner._functions["func4"].with_status(FunctionStatus.COMPLETED)
+        mock_workflow_runner._functions["func5(1)"].with_status(
+            FunctionStatus.COMPLETED
+        )
+        mock_workflow_runner._functions["func5(2)"].with_status(
+            FunctionStatus.COMPLETED
+        )
+        mock_workflow_runner._functions["func5(3)"].with_status(
+            FunctionStatus.COMPLETED
+        )
 
         assert mock_workflow_runner._all_functions_completed() is True
 
@@ -323,12 +317,12 @@ class TestWorkflowRunnerMonitoring:
         assert mock_workflow_runner._all_functions_completed() is False
 
     def test_get_active_functions(self, mock_workflow_runner: WorkflowRunner):
-        """Test _get_active_functions returns functions with logs started but not complete"""
+        """Test _get_active_functions returns functions that are not complete"""
         # Build functions from workflow data (already MockFaaSrFunction due to patch)
         mock_workflow_runner._functions = mock_workflow_runner._build_functions(
             stream_logs=False
         )
-        # Modify func1: running with logs started but not complete
+        # Modify func1: running with logs started but not complete (active)
         mock_workflow_runner._functions["func1"].with_status(
             FunctionStatus.RUNNING
         ).with_logs_started(True).with_logs_complete(False)
@@ -338,6 +332,13 @@ class TestWorkflowRunnerMonitoring:
         ).with_logs_started(True).with_logs_complete(True)
         # Modify func3: completed (final state, not active)
         mock_workflow_runner._functions["func3"].with_status(FunctionStatus.COMPLETED)
+        # Set all other functions to have logs complete or be in final state (not active)
+        for func_name, func in mock_workflow_runner._functions.items():
+            if func_name not in ["func1", "func2", "func3"]:
+                if func.status == FunctionStatus.PENDING:
+                    func.with_logs_complete(True)
+                elif not has_final_state(func.status):
+                    func.with_logs_complete(True)
 
         active = mock_workflow_runner._get_active_functions()
         assert len(active) == 1
@@ -378,6 +379,16 @@ class TestWorkflowRunnerMonitoring:
         mock_workflow_runner._functions["func1"].with_status(FunctionStatus.COMPLETED)
         mock_workflow_runner._functions["func2"].with_status(FunctionStatus.NOT_INVOKED)
         mock_workflow_runner._functions["func3"].with_status(FunctionStatus.COMPLETED)
+        mock_workflow_runner._functions["func4"].with_status(FunctionStatus.COMPLETED)
+        mock_workflow_runner._functions["func5(1)"].with_status(
+            FunctionStatus.COMPLETED
+        )
+        mock_workflow_runner._functions["func5(2)"].with_status(
+            FunctionStatus.COMPLETED
+        )
+        mock_workflow_runner._functions["func5(3)"].with_status(
+            FunctionStatus.COMPLETED
+        )
         mock_workflow_runner._prev_statuses = (
             mock_workflow_runner.get_function_statuses()
         )
@@ -421,8 +432,16 @@ class TestWorkflowRunnerMonitoring:
         # Modify func1: failed with logs complete
         mock_workflow_runner._functions["func1"].with_status(
             FunctionStatus.FAILED
-        ).with_logs_complete(True)
-        # func2 is already PENDING
+        ).with_logs_started(True).with_logs_complete(True)
+        # Set func2 to have logs complete so it's not active (allows cascade to proceed)
+        mock_workflow_runner._functions["func2"].with_logs_complete(True)
+        # Set all other functions to have logs complete or be in final state (not active)
+        for func_name, func in mock_workflow_runner._functions.items():
+            if func_name not in ["func1", "func2"]:
+                if func.status == FunctionStatus.PENDING:
+                    func.with_logs_complete(True)
+                elif not has_final_state(func.status):
+                    func.with_logs_complete(True)
         mock_workflow_runner._prev_statuses = (
             mock_workflow_runner.get_function_statuses()
         )
