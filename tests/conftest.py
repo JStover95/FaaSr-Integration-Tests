@@ -10,6 +10,12 @@ from mypy_boto3_s3.client import S3Client
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+WORKFLOW_NAME = "test_workflow"
+FUNCTION_INVOKE = "func1"
+INVOCATION_ID = "test-invocation-123"
+INVOCATION_TIMESTAMP = "2024-01-01T00:00:00Z"
+DEFAULT_DATASTORE = "S3"
+FAASR_LOG = "faasr-logs"
 DATASTORE_ENDPOINT = "http://localhost:5000"
 DATASTORE_BUCKET = "testing"
 DATASTORE_REGION = "us-east-1"
@@ -23,12 +29,62 @@ def datastore_config() -> dict[str, Any]:
     }
 
 
-def workflow_data() -> dict[str, Any]:
+def action_list() -> dict[str, Any]:
     return {
-        "DefaultDataStore": "S3",
+        "func1": {
+            "FaaSServer": "GH",
+            "FunctionName": "func1",
+            "Type": "Python",
+            "InvokeNext": ["func2", "func3"],
+        },
+        "func2": {
+            "FaaSServer": "GH",
+            "FunctionName": "func2",
+            "Type": "Python",
+        },
+        "func3": {
+            "FaaSServer": "GH",
+            "FunctionName": "func3",
+            "Type": "Python",
+        },
+    }
+
+
+def compute_servers() -> dict[str, Any]:
+    return {
+        "GH": {
+            "FaaSType": "GitHubActions",
+            "UserName": "test_user",
+            "ActionRepoName": "test_repo",
+        },
+    }
+
+
+def workflow_data() -> dict[str, Any]:
+    """
+    Create a FaaSr payload dictionary for testing.
+    Returns a new instance each time to avoid test isolation issues.
+    """
+    return {
+        "WorkflowName": WORKFLOW_NAME,
+        "FunctionInvoke": FUNCTION_INVOKE,
+        "InvocationID": INVOCATION_ID,
+        "InvocationTimestamp": INVOCATION_TIMESTAMP,
+        "FaaSrLog": FAASR_LOG,
+        "DefaultDataStore": DEFAULT_DATASTORE,
+        "ActionList": action_list(),
+        "ComputeServers": compute_servers(),
         "DataStores": {
             "S3": datastore_config(),
         },
+    }
+
+
+def reverse_adj_graph() -> dict[str, set[str]]:
+    return {
+        "func1": {"func2", "func3"},
+        "func2": set(),
+        "func3": set(),
     }
 
 
