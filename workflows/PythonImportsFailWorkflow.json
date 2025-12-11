@@ -21,7 +21,7 @@
       "UserName": "JStover95",
       "UseSecretStore": true,
       "ActionRepoName": "FaaSr-Integration-Tests",
-      "Branch": "feature/JStover95/PythonImportsTestWorkflow"
+      "Branch": "main"
     }
   },
   "DataStores": {
