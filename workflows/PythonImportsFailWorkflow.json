@@ -41,6 +41,9 @@
     "more_imports": "JStover95/FaaSr-Integration-Tests/functions/PythonImportsTestWorkflow",
     "less_imports": "JStover95/FaaSr-Integration-Tests/functions/PythonImportsTestWorkflow"
   },
+  "PyPIPackageDownloads": {
+    "more-imports": ["pandas", "numpy"]
+  },
   "LoggingDataStore": "S3",
   "FaaSrLog": "FaaSrLog",
   "WorkflowName": "PythonImportsFailWorkflow"
