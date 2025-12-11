@@ -1,0 +1,50 @@
+{
+  "ActionList": {
+    "more-imports": {
+      "Arguments": {},
+      "InvokeNext": ["less-imports"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "more_imports"
+    },
+    "less-imports": {
+      "Arguments": {},
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "less_imports"
+    }
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UserName": "JStover95",
+      "UseSecretStore": true,
+      "ActionRepoName": "FaaSr-Integration-Tests",
+      "Branch": "main"
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.us-east-1.amazonaws.com",
+      "Bucket": "faasr-integration-tests",
+      "Region": "us-east-1"
+    }
+  },
+  "ActionContainers": {
+    "more-imports": "jessestover/faasr-python-walk:latest",
+    "less-imports": "jessestover/faasr-python-walk:latest"
+  },
+  "FunctionInvoke": "more-imports",
+  "DefaultDataStore": "S3",
+  "FunctionGitRepo": {
+    "more_imports": "JStover95/FaaSr-Integration-Tests/functions/PythonImportsTestWorkflow",
+    "less_imports": "JStover95/FaaSr-Integration-Tests/functions/PythonImportsTestWorkflow"
+  },
+  "PyPIPackageDownloads": {
+    "more_imports": ["pandas", "numpy"]
+  },
+  "LoggingDataStore": "S3",
+  "FaaSrLog": "FaaSrLog",
+  "WorkflowName": "PythonImportsPassWorkflow"
+}
