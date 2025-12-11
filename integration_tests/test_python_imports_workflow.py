@@ -24,9 +24,13 @@ def test_more_imports(pass_tester: WorkflowTester, fail_tester: WorkflowTester):
 
 
 def test_less_imports(pass_tester: WorkflowTester, fail_tester: WorkflowTester):
-    # The failing workflow should fail
+    # The failing workflow should fail due to an import error
     fail_tester.wait_for("less-imports", should_fail=True)
     fail_tester.assert_function_failed("less-imports")
+    fail_tester.assert_logs_contain(
+        "less-imports",
+        "Python file 01_more_imports.py has following source error: No module named 'numpy'",
+    )
 
     # The passing workflow should complete successfully
     pass_tester.wait_for("less-imports")
