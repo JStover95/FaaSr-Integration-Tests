@@ -284,7 +284,8 @@ def deploy_to_github(workflow_data):
 
             # Dynamically set required secrets and variables
             secret_imports = generate_github_secret_imports(workflow_data)
-            secret_imports += generate_user_defined_secret_imports(workflow_data, action_name)
+            if user_defined_secret_imports := generate_user_defined_secret_imports(workflow_data, action_name):
+                secret_imports += "\n" + user_defined_secret_imports
 
             if requires_vm:
                 workflow_content = generate_vm_yaml(
