@@ -11,10 +11,10 @@ dependencies = [
     "python-dotenv>=1.2.1",
 ]
 
-[tool.uv.sources]
-faasr-py = { git = "https://github.com/JStover95/FaaSr-Backend-Fork.git", rev = "feature/JStover95/faasr-secret-github-actions" }
-
 [dependency-groups]
 dev = [
     "boto3-stubs[s3]>=1.40.70",
 ]
+
+[tool.uv.sources]
+faasr-py = { git = "https://github.com/JStover95/FaaSr-Backend-Fork.git", rev = "feature/JStover95/faasr-secret-github-actions" }
