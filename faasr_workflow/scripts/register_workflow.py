@@ -72,7 +72,7 @@ def generate_github_secret_imports(faasr_payload):
     # Add secrets for compute servers
     for faas_name, compute_server in faasr_payload.get("ComputeServers", {}).items():
         faas_type = compute_server.get("FaaSType", "")
-        match (faas_type):
+        match faas_type:
             case "GitHubActions":
                 pat_secret = f"{faas_name}_PAT"
                 import_statements.append(
@@ -144,7 +144,9 @@ def generate_user_defined_secret_imports(faasr_payload, action_name):
     import_statements = []
 
     # Add secrets for function
-    for secret_name in faasr_payload.get("ActionList", {}).get(action_name, {}).get("Secrets", []):
+    for secret_name in (
+        faasr_payload.get("ActionList", {}).get(action_name, {}).get("Secrets", [])
+    ):
         import_statements.append(f"{secret_name}: ${{{{ secrets.{secret_name}}}}}")
 
     indent = " " * 20
@@ -284,7 +286,11 @@ def deploy_to_github(workflow_data):
 
             # Dynamically set required secrets and variables
             secret_imports = generate_github_secret_imports(workflow_data)
-            secret_imports += generate_user_defined_secret_imports(workflow_data, action_name)
+            if user_defined_secrets := generate_user_defined_secret_imports(
+                workflow_data,
+                action_name,
+            ):
+                secret_imports += f"\n{user_defined_secrets}"
 
             if requires_vm:
                 workflow_content = generate_vm_yaml(
@@ -340,8 +346,9 @@ def deploy_to_github(workflow_data):
 def get_lambda_credentials(workflow_data):
     """Fetches AWS Lambda credentials from environment variables"""
     # Get AWS credentials
-    aws_access_key, aws_secret_key = os.getenv("AWS_AccessKey"), os.getenv(
-        "AWS_SecretKey"
+    aws_access_key, aws_secret_key = (
+        os.getenv("AWS_AccessKey"),
+        os.getenv("AWS_SecretKey"),
     )
 
     # Fail if AWS creds not set
@@ -730,7 +737,6 @@ def create_gcp_job_definition(container_image, service_account, resources):
 
 
 def deploy_to_gcp(workflow_data):
-
     gcp_secret_key = os.getenv("GCP_SecretKey")
 
     if not gcp_secret_key:
@@ -804,8 +810,8 @@ def deploy_to_gcp(workflow_data):
         service_account = gcp_server_config.get("ClientEmail")
         if not service_account:
             logger.error(
-                f"ClientEmail (service account) is required for GoogleCloud server "
-                f"but not found in ComputeServers configuration"
+                "ClientEmail (service account) is required for GoogleCloud server "
+                "but not found in ComputeServers configuration"
             )
             sys.exit(1)
 
@@ -899,8 +905,8 @@ def deploy_to_slurm(workflow_data):
         )
 
     logger.info(
-        f"SLURM configuration validated successfully. "
-        f"No persistent resources created - jobs will be submitted at invocation time."
+        "SLURM configuration validated successfully. "
+        "No persistent resources created - jobs will be submitted at invocation time."
     )
 
 
