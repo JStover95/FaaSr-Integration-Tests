@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-faasr-py = { git = "https://github.com/FaaSr/FaaSr-Backend.git" }
+faasr-py = { git = "https://github.com/JStover95/FaaSr-Backend-Fork.git", rev = "feature/JStover95/faasr-secret-github-actions" }
 
 [dependency-groups]
 dev = [

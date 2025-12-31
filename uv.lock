@@ -310,7 +310,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "faasr-py", git = "https://github.com/FaaSr/FaaSr-Backend.git" },
+    { name = "faasr-py", git = "https://github.com/JStover95/FaaSr-Backend-Fork.git?rev=feature%2FJStover95%2Ffaasr-secret-github-actions" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "pygithub", specifier = ">=2.8.1" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
@@ -322,7 +322,7 @@ dev = [{ name = "boto3-stubs", extras = ["s3"], specifier = ">=1.40.70" }]
 [[package]]
 name = "faasr-py"
 version = "0.1.13"
-source = { git = "https://github.com/FaaSr/FaaSr-Backend.git#6727bea1892bb48aeecd0533004a7b51fab10b82" }
+source = { git = "https://github.com/JStover95/FaaSr-Backend-Fork.git?rev=feature%2FJStover95%2Ffaasr-secret-github-actions#169cc9872ae80b5a3b0b232acdaf83398bc02b9b" }
 dependencies = [
     { name = "awslambdaric" },
     { name = "boto3" },
