@@ -127,7 +127,8 @@
     "OW": {
       "FaaSType": "OpenWhisk",
       "Endpoint": "https://3.82.57.157:31002",
-      "Namespace": "guest"
+      "Namespace": "guest",
+      "API.key": "OW_APIkey"
     }
   },
   "DataStores": {
