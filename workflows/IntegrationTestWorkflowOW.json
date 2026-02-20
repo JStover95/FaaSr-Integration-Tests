@@ -9,7 +9,7 @@
         "input4": "input4.txt"
       },
       "InvokeNext": ["test-py-api", "test-r-api"],
-      "FaaSServer": "OW",
+      "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "create_input"
     },
@@ -124,12 +124,18 @@
     }
   },
   "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UserName": "JStover95",
+      "UseSecretStore": true,
+      "ActionRepoName": "FaaSr-Integration-Tests",
+      "Branch": "main"
+    },
     "OW": {
       "UseSecretStore": true,
       "FaaSType": "OpenWhisk",
-      "Endpoint": "https://3.82.57.157:31002",
-      "Namespace": "guest",
-      "API.key": "OW_APIKEY"
+      "Endpoint": "https://3.85.57.154:31002",
+      "Namespace": "guest"
     }
   },
   "DataStores": {
@@ -142,7 +148,7 @@
   "FunctionInvoke": "create-input",
   "DefaultDataStore": "S3",
   "ActionContainers": {
-    "create-input": "ghcr.io/faasr/openwhisk-python:latest",
+    "create-input": "ghcr.io/faasr/github-actions-python:latest",
     "test-py-api": "ghcr.io/faasr/openwhisk-python:latest",
     "test-r-api": "ghcr.io/faasr/openwhisk-r:latest",
     "sync1": "ghcr.io/faasr/openwhisk-python:latest",
