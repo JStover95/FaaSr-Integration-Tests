@@ -134,7 +134,7 @@
     "OW": {
       "UseSecretStore": true,
       "FaaSType": "OpenWhisk",
-      "Endpoint": "https://3.85.57.154:31002",
+      "Endpoint": "https://54.145.59.56:31002",
       "Namespace": "guest",
       "API.key": "OW_APIkey"
     }
