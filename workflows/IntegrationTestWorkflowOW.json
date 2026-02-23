@@ -150,15 +150,15 @@
   "DefaultDataStore": "S3",
   "ActionContainers": {
     "create-input": "ghcr.io/faasr/github-actions-python:latest",
-    "test-py-api": "hub.docker.com/faasr/openwhisk-python:latest",
-    "test-r-api": "hub.docker.com/faasr/openwhisk-r:latest",
-    "sync1": "hub.docker.com/faasr/openwhisk-python:latest",
-    "test-run-true": "hub.docker.com/faasr/openwhisk-python:latest",
-    "test-dontrun-false": "hub.docker.com/faasr/openwhisk-python:latest",
-    "test-run-false": "hub.docker.com/faasr/openwhisk-python:latest",
-    "test-dontrun-true": "hub.docker.com/faasr/openwhisk-python:latest",
-    "test-rank": "hub.docker.com/faasr/openwhisk-python:latest",
-    "sync2": "hub.docker.com/faasr/openwhisk-python:latest"
+    "test-py-api": "faasr/openwhisk-python:latest",
+    "test-r-api": "faasr/openwhisk-r:latest",
+    "sync1": "faasr/openwhisk-python:latest",
+    "test-run-true": "faasr/openwhisk-python:latest",
+    "test-dontrun-false": "faasr/openwhisk-python:latest",
+    "test-run-false": "faasr/openwhisk-python:latest",
+    "test-dontrun-true": "faasr/openwhisk-python:latest",
+    "test-rank": "faasr/openwhisk-python:latest",
+    "sync2": "faasr/openwhisk-python:latest"
   },
   "FunctionGitRepo": {
     "create_input": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
