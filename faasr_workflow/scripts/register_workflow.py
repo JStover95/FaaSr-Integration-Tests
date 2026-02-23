@@ -614,6 +614,7 @@ def deploy_to_ow(workflow_data):
         try:
             # Create prefixed function name using workflow_name-action_name format
             prefixed_func_name = f"{json_prefix}-{action_name}"
+            logger.info(f"Prefixed function name: {prefixed_func_name}")
 
             # Create or update OpenWhisk action using wsk CLI
             try:
