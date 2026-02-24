@@ -1,0 +1,68 @@
+{
+  "ActionList": {
+    "create-input": {
+      "Arguments": {
+        "folder": "integration-tests",
+        "input1": "input1.txt",
+        "input2": "input2.txt",
+        "input3": "input3.txt",
+        "input4": "input4.txt"
+      },
+      "InvokeNext": ["test-py-api", "test-r-api"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "create_input"
+    },
+    "test-py-api": {
+      "Arguments": {
+        "folder": "integration-tests",
+        "input1": "input1.txt",
+        "input2": "input2.txt",
+        "input3": "input3.txt",
+        "output1": "output1-py.txt",
+        "output2": "output2-py.txt"
+      },
+      "InvokeNext": ["sync1"],
+      "FaaSServer": "OW",
+      "Type": "Python",
+      "FunctionName": "test_py_api",
+      "PulumiOrg": "JStover95"
+    }
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UserName": "JStover95",
+      "UseSecretStore": true,
+      "ActionRepoName": "FaaSr-Integration-Tests",
+      "Branch": "main"
+    },
+    "OW": {
+      "UseSecretStore": true,
+      "FaaSType": "OpenWhisk",
+      "Endpoint": "https://54.145.59.56:31002",
+      "Namespace": "guest",
+      "API.key": "OW_APIkey"
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.us-east-1.amazonaws.com",
+      "Bucket": "faasr-integration-tests",
+      "Region": "us-east-1"
+    }
+  },
+  "FunctionInvoke": "create-input",
+  "DefaultDataStore": "S3",
+  "ActionContainers": {
+    "create-input": "ghcr.io/faasr/github-actions-python:latest",
+    "test-py-api": "jessestover/faasr-ow-pulumi-python:latest"
+  },
+  "FunctionGitRepo": {
+    "create_input": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
+    "test_py_api": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow"
+  },
+  "LoggingDataStore": "S3",
+  "FaaSrLog": "FaaSrLog",
+  "WorkflowName": "IntegrationTestWorkflowOWPulumi"
+}
