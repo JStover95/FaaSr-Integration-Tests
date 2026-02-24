@@ -25,8 +25,7 @@
       "InvokeNext": ["sync1"],
       "FaaSServer": "OW",
       "Type": "Python",
-      "FunctionName": "test_py_api",
-      "PulumiOrg": "JStover95"
+      "FunctionName": "test_py_api"
     }
   },
   "ComputeServers": {
@@ -42,7 +41,8 @@
       "FaaSType": "OpenWhisk",
       "Endpoint": "https://13.222.165.24:31002",
       "Namespace": "guest",
-      "API.key": "OW_APIkey"
+      "API.key": "OW_APIkey",
+      "PulumiOrg": "JStover95"
     }
   },
   "DataStores": {
