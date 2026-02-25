@@ -1,0 +1,162 @@
+{
+  "ActionList": {
+    "create-input": {
+      "Arguments": {
+        "folder": "integration-tests",
+        "input1": "input1.txt",
+        "input2": "input2.txt",
+        "input3": "input3.txt",
+        "input4": "input4.txt"
+      },
+      "InvokeNext": ["test-py-api"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "create_input"
+    },
+    "test-py-api": {
+      "Arguments": {
+        "folder": "integration-tests",
+        "input1": "input1.txt",
+        "input2": "input2.txt",
+        "input3": "input3.txt",
+        "output1": "output1-py.txt",
+        "output2": "output2-py.txt"
+      },
+      "InvokeNext": ["sync1"],
+      "FaaSServer": "OW",
+      "Type": "Python",
+      "FunctionName": "test_py_api"
+    },
+    "sync1": {
+      "Arguments": {
+        "folder": "integration-tests",
+        "input1": "input1.txt",
+        "input2": "input2.txt",
+        "input3": "input3.txt",
+        "input4": "input4.txt",
+        "output1_py": "output1-py.txt",
+        "output2_py": "output2-py.txt",
+        "output1_R": "output1-R.txt",
+        "output2_R": "output2-R.txt"
+      },
+      "InvokeNext": [
+        {
+          "True": ["test-run-true"],
+          "False": ["test-dontrun-false"]
+        }
+      ],
+      "FaaSServer": "OW",
+      "Type": "Python",
+      "FunctionName": "sync1"
+    },
+    "test-run-true": {
+      "Arguments": {
+        "folder": "integration-tests",
+        "output": "run_true_output.txt"
+      },
+      "InvokeNext": [
+        {
+          "True": ["test-dontrun-true"],
+          "False": ["test-run-false"]
+        }
+      ],
+      "FaaSServer": "OW",
+      "Type": "Python",
+      "FunctionName": "test_run_true"
+    },
+    "test-dontrun-false": {
+      "InvokeNext": [],
+      "FaaSServer": "OW",
+      "Type": "Python",
+      "FunctionName": "test_dontrun_false"
+    },
+    "test-run-false": {
+      "Arguments": {
+        "folder": "integration-tests",
+        "output": "run_false_output.txt"
+      },
+      "InvokeNext": ["test-rank(5)"],
+      "FaaSServer": "OW",
+      "Type": "Python",
+      "FunctionName": "test_run_false"
+    },
+    "test-dontrun-true": {
+      "InvokeNext": [],
+      "FaaSServer": "OW",
+      "Type": "Python",
+      "FunctionName": "test_dontrun_true"
+    },
+    "test-rank": {
+      "Arguments": {
+        "folder": "integration-tests",
+        "rank_folder": "rank_files"
+      },
+      "InvokeNext": ["sync2"],
+      "FaaSServer": "OW",
+      "Type": "Python",
+      "FunctionName": "test_rank"
+    },
+    "sync2": {
+      "Arguments": {
+        "folder": "integration-tests",
+        "rank_folder": "rank_files",
+        "run_true_output": "run_true_output.txt",
+        "run_false_output": "run_false_output.txt"
+      },
+      "InvokeNext": [],
+      "FaaSServer": "OW",
+      "Type": "Python",
+      "FunctionName": "sync2"
+    }
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UserName": "JStover95",
+      "UseSecretStore": true,
+      "ActionRepoName": "FaaSr-Integration-Tests",
+      "Branch": "main"
+    },
+    "OW": {
+      "UseSecretStore": true,
+      "FaaSType": "OpenWhisk",
+      "Endpoint": "https://98.84.126.65:31002",
+      "Namespace": "guest",
+      "API.key": "OW_APIkey"
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.us-east-1.amazonaws.com",
+      "Bucket": "faasr-integration-tests",
+      "Region": "us-east-1"
+    }
+  },
+  "FunctionInvoke": "create-input",
+  "DefaultDataStore": "S3",
+  "ActionContainers": {
+    "create-input": "ghcr.io/faasr/github-actions-python:latest",
+    "test-py-api": "faasr/openwhisk-python-arm:2.0.4",
+    "sync1": "faasr/openwhisk-python-arm:2.0.4",
+    "test-run-true": "faasr/openwhisk-python-arm:2.0.4",
+    "test-dontrun-false": "faasr/openwhisk-python-arm:2.0.4",
+    "test-run-false": "faasr/openwhisk-python-arm:2.0.4",
+    "test-dontrun-true": "faasr/openwhisk-python-arm:2.0.4",
+    "test-rank": "faasr/openwhisk-python-arm:2.0.4",
+    "sync2": "faasr/openwhisk-python-arm:2.0.4"
+  },
+  "FunctionGitRepo": {
+    "create_input": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
+    "test_py_api": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
+    "sync1": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
+    "test_run_true": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
+    "test_dontrun_false": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
+    "test_run_false": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
+    "test_dontrun_true": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
+    "test_rank": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
+    "sync2": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow"
+  },
+  "LoggingDataStore": "S3",
+  "FaaSrLog": "FaaSrLog",
+  "WorkflowName": "IntegrationTestWorkflowOWArm"
+}
