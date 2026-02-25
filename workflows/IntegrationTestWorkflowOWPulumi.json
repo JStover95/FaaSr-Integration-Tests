@@ -55,8 +55,8 @@
   "FunctionInvoke": "create-input",
   "DefaultDataStore": "S3",
   "ActionContainers": {
-    "create-input": "ghcr.io/faasr/github-actions-python:latest",
-    "test-py-api": "jessestover/faasr-ow-pulumi-python:latest"
+    "create-input": "jessestover/faasr-ow-pulumi-github-actions-python:latest",
+    "test-py-api": "jessestover/faasr-ow-pulumi-ow-python:latest"
   },
   "FunctionGitRepo": {
     "create_input": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
