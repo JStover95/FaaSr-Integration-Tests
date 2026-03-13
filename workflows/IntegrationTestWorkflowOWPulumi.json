@@ -1,6 +1,6 @@
 {
   "ActionList": {
-    "create-input": {
+    "CreateInput": {
       "Arguments": {
         "folder": "integration-tests",
         "input1": "input1.txt",
@@ -8,12 +8,12 @@
         "input3": "input3.txt",
         "input4": "input4.txt"
       },
-      "InvokeNext": ["test-py-api", "test-r-api"],
+      "InvokeNext": ["TestPyApi", "TestRApi"],
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "create_input"
     },
-    "test-py-api": {
+    "TestPyApi": {
       "Arguments": {
         "folder": "integration-tests",
         "input1": "input1.txt",
@@ -41,8 +41,7 @@
       "FaaSType": "OpenWhisk",
       "Endpoint": "https://13.222.165.24:31002",
       "Namespace": "guest",
-      "API.key": "OW_APIkey",
-      "PulumiOrg": "JStover95"
+      "API.key": "OW_APIkey"
     }
   },
   "DataStores": {
@@ -52,11 +51,11 @@
       "Region": "us-east-1"
     }
   },
-  "FunctionInvoke": "create-input",
+  "FunctionInvoke": "CreateInput",
   "DefaultDataStore": "S3",
   "ActionContainers": {
-    "create-input": "jessestover/faasr-ow-pulumi-github-actions-python:latest",
-    "test-py-api": "jessestover/faasr-ow-pulumi-ow-python:latest"
+    "CreateInput": "jessestover/faasr-ow-pulumi-github-actions-python:latest",
+    "TestPyApi": "jessestover/faasr-ow-pulumi-ow-python:latest"
   },
   "FunctionGitRepo": {
     "create_input": "JStover95/FaaSr-Integration-Tests/functions/IntegrationTestWorkflow",
@@ -64,5 +63,8 @@
   },
   "LoggingDataStore": "S3",
   "FaaSrLog": "FaaSrLog",
-  "WorkflowName": "IntegrationTestWorkflowOWPulumi"
+  "WorkflowName": "IntegrationTestWorkflowOWPulumi",
+  "PulumiSecretStore": {
+    "OrgName": "JStover95"
+  }
 }

@@ -1,6 +1,6 @@
 {
   "ActionList": {
-    "create-input": {
+    "CreateInput": {
       "Arguments": {
         "folder": "integration-tests",
         "input1": "input1.txt",
@@ -8,12 +8,12 @@
         "input3": "input3.txt",
         "input4": "input4.txt"
       },
-      "InvokeNext": ["test-py-api"],
+      "InvokeNext": ["TestPyApi"],
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "create_input"
     },
-    "test-py-api": {
+    "TestPyApi": {
       "Arguments": {
         "folder": "integration-tests",
         "input1": "input1.txt",
@@ -41,52 +41,52 @@
       },
       "InvokeNext": [
         {
-          "True": ["test-run-true"],
-          "False": ["test-dontrun-false"]
+          "True": ["TestRunTrue"],
+          "False": ["TestDontRunFalse"]
         }
       ],
       "FaaSServer": "OW",
       "Type": "Python",
       "FunctionName": "sync1"
     },
-    "test-run-true": {
+    "TestRunTrue": {
       "Arguments": {
         "folder": "integration-tests",
         "output": "run_true_output.txt"
       },
       "InvokeNext": [
         {
-          "True": ["test-dontrun-true"],
-          "False": ["test-run-false"]
+          "True": ["TestDontRunTrue"],
+          "False": ["TestRunFalse"]
         }
       ],
       "FaaSServer": "OW",
       "Type": "Python",
       "FunctionName": "test_run_true"
     },
-    "test-dontrun-false": {
+    "TestDontRunFalse": {
       "InvokeNext": [],
       "FaaSServer": "OW",
       "Type": "Python",
       "FunctionName": "test_dontrun_false"
     },
-    "test-run-false": {
+    "TestRunFalse": {
       "Arguments": {
         "folder": "integration-tests",
         "output": "run_false_output.txt"
       },
-      "InvokeNext": ["test-rank(5)"],
+      "InvokeNext": ["TestRank(5)"],
       "FaaSServer": "OW",
       "Type": "Python",
       "FunctionName": "test_run_false"
     },
-    "test-dontrun-true": {
+    "TestDontRunTrue": {
       "InvokeNext": [],
       "FaaSServer": "OW",
       "Type": "Python",
       "FunctionName": "test_dontrun_true"
     },
-    "test-rank": {
+    "TestRank": {
       "Arguments": {
         "folder": "integration-tests",
         "rank_folder": "rank_files"
@@ -132,17 +132,17 @@
       "Region": "us-east-1"
     }
   },
-  "FunctionInvoke": "create-input",
+  "FunctionInvoke": "CreateInput",
   "DefaultDataStore": "S3",
   "ActionContainers": {
-    "create-input": "ghcr.io/faasr/github-actions-python:latest",
-    "test-py-api": "faasr/openwhisk-python-arm:2.0.4",
+    "CreateInput": "ghcr.io/faasr/github-actions-python:latest",
+    "TestPyApi": "faasr/openwhisk-python-arm:2.0.4",
     "sync1": "faasr/openwhisk-python-arm:2.0.4",
-    "test-run-true": "faasr/openwhisk-python-arm:2.0.4",
-    "test-dontrun-false": "faasr/openwhisk-python-arm:2.0.4",
-    "test-run-false": "faasr/openwhisk-python-arm:2.0.4",
-    "test-dontrun-true": "faasr/openwhisk-python-arm:2.0.4",
-    "test-rank": "faasr/openwhisk-python-arm:2.0.4",
+    "TestRunTrue": "faasr/openwhisk-python-arm:2.0.4",
+    "TestDontRunFalse": "faasr/openwhisk-python-arm:2.0.4",
+    "TestRunFalse": "faasr/openwhisk-python-arm:2.0.4",
+    "TestDontRunTrue": "faasr/openwhisk-python-arm:2.0.4",
+    "TestRank": "faasr/openwhisk-python-arm:2.0.4",
     "sync2": "faasr/openwhisk-python-arm:2.0.4"
   },
   "FunctionGitRepo": {
