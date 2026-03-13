@@ -1,0 +1,49 @@
+{
+  "ActionList": {
+    "Empty": {
+      "Arguments": {},
+      "InvokeNext": ["RunGLM"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "empty_function"
+    },
+    "RunGLM": {
+      "Arguments": {
+        "folder": "GLM"
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "R",
+      "FunctionName": "run_glm_tutorial"
+    }
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UserName": "JStover95",
+      "UseSecretStore": true,
+      "ActionRepoName": "FaaSr-workflow",
+      "Branch": "main"
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.us-east-1.amazonaws.com",
+      "Bucket": "faasr-glm",
+      "Region": "us-east-1"
+    }
+  },
+  "ActionContainers": {
+    "Empty": "ghcr.io/faasr/github-actions-python:latest",
+    "RunGLM": "jessestover/faasr-glm:latest"
+  },
+  "FunctionInvoke": "Empty",
+  "DefaultDataStore": "S3",
+  "FunctionGitRepo": {
+    "empty_function": "JStover95/FaaSr-Functions",
+    "run_glm_tutorial": "JStover95/FaaSr-GLM/FaaSr"
+  },
+  "LoggingDataStore": "S3",
+  "FaaSrLog": "FaaSrLog",
+  "WorkflowName": "FaaSrGLMTutorialWorkflow"
+}
