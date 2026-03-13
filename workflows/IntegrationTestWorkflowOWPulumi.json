@@ -8,7 +8,7 @@
         "input3": "input3.txt",
         "input4": "input4.txt"
       },
-      "InvokeNext": ["TestPyApi", "TestRApi"],
+      "InvokeNext": ["TestPyApi"],
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "create_input"
