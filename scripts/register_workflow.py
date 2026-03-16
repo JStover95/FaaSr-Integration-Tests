@@ -132,13 +132,20 @@ def generate_github_secret_imports(faasr_payload):
                     ]
                 )
 
-    # If workflow is configured with Pulumi secret store, expose Pulumi token
-    if "PulumiSecretStore" in faasr_payload:
-        import_statements.append(
-            "PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}"
-        )
-
     # Indent each line for YAML formatting
+    indent = " " * 20
+    import_statements = "\n".join(f"{indent}{s}" for s in import_statements)
+
+    return import_statements
+
+
+def generate_user_defined_secret_imports(faasr_payload):
+    """Generate user-defined secret imports for the workflow (applies to all functions)"""
+    import_statements = []
+
+    for secret_name in faasr_payload.get("Secrets", []):
+        import_statements.append(f"{secret_name}: ${{{{ secrets.{secret_name}}}}}")
+
     indent = " " * 20
     import_statements = "\n".join(f"{indent}{s}" for s in import_statements)
 
@@ -258,6 +265,9 @@ def deploy_to_github(workflow_data):
         default_branch = repo.default_branch
         logger.info(f"Using branch: {default_branch}")
 
+        # User-defined secrets (workflow-level, same for all functions)
+        user_defined_secret_imports = generate_user_defined_secret_imports(workflow_data)
+
         # Deploy each action
         for action_name, action_data in github_actions.items():
             # Create prefixed action name using workflow_name-action_name format
@@ -276,6 +286,8 @@ def deploy_to_github(workflow_data):
 
             # Dynamically set required secrets and variables
             secret_imports = generate_github_secret_imports(workflow_data)
+            if user_defined_secret_imports:
+                secret_imports += "\n" + user_defined_secret_imports
 
             if requires_vm:
                 workflow_content = generate_vm_yaml(
@@ -612,7 +624,6 @@ def deploy_to_ow(workflow_data):
                 container_image = workflow_data.get("ActionContainers", {}).get(
                     action_name
                 )
-                logger.info(f"Container image: {container_image}")
 
                 if not container_image:
                     logger.error(f"No container specified for action: {action_name}")
