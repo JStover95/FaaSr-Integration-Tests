@@ -62,11 +62,19 @@ def download_zentra_readings(serial_number: str, num_hours: int):
 
     timestamp = end_dt.strftime("%Y%m%dT%H%M%SZ")
     output_name = f"zentra_{serial_number}_{timestamp}.csv"
+    segments_folder = f"{serial_number}_segments"
     readings_df.to_csv(output_name, index=False)
 
     faasr_put_file(
         local_file=output_name,
-        remote_folder="Zentra",
+        remote_folder=segments_folder,
         remote_file=output_name,
     )
-    faasr_log(f"Uploaded Zentra readings to Zentra/{output_name}")
+    # Upload a stable pointer file for downstream append step.
+    faasr_put_file(
+        local_file=output_name,
+        remote_folder=segments_folder,
+        remote_file="latest.csv",
+    )
+
+    faasr_log(f"Uploaded Zentra readings to {segments_folder}/{output_name}")
