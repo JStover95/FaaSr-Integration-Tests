@@ -33,7 +33,7 @@
   "FunctionInvoke": "GetZentraData",
   "DefaultDataStore": "S3",
   "FunctionGitRepo": {
-    "download_zentra_readings": "FaaSr/FaaSr-Functions/Zentra/python"
+    "download_zentra_readings": "JStover95/FaaSr-Integration-Tests/functions/Zentra"
   },
   "PyPIPackageDownloads": {
     "download_zentra_readings": ["pandas", "requests"]
