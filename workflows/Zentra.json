@@ -1,0 +1,45 @@
+{
+  "ActionList": {
+    "GetZentraData": {
+      "Arguments": {
+        "serial_number": "z6-19594",
+        "num_hours": 24
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_zentra_readings"
+    }
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UserName": "JStover95",
+      "UseSecretStore": true,
+      "ActionRepoName": "FaaSr-Integration-Tests",
+      "Branch": "main"
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.us-east-1.amazonaws.com",
+      "Bucket": "faasr-integration-tests",
+      "Region": "us-east-1"
+    }
+  },
+  "ActionContainers": {
+    "GetZentraData": "ghcr.io/faasr/github-actions-python:latest"
+  },
+  "FunctionInvoke": "GetZentraData",
+  "DefaultDataStore": "S3",
+  "FunctionGitRepo": {
+    "download_zentra_readings": "FaaSr/FaaSr-Functions/Zentra/python"
+  },
+  "PyPIPackageDownloads": {
+    "download_zentra_readings": ["pandas", "requests"]
+  },
+  "Secrets": ["ZENTRA_TOKEN"],
+  "FaaSrLog": "FaaSrLog",
+  "LoggingDataStore": "S3",
+  "WorkflowName": "Zentra"
+}
