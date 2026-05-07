@@ -23,16 +23,16 @@
   "ComputeServers": {
     "GH": {
       "FaaSType": "GitHubActions",
+      "UserName": "JStover95",
       "UseSecretStore": true,
-      "ActionRepoName": "FaaSr-workflow",
-      "Branch": "main",
-      "UserName": "YOUR_USERNAME"
+      "ActionRepoName": "FaaSr-Integration-Tests",
+      "Branch": "main"
     }
   },
   "DataStores": {
     "S3": {
-      "Endpoint": "https://play.min.io",
-      "Bucket": "faasr",
+      "Endpoint": "https://s3.us-east-1.amazonaws.com",
+      "Bucket": "faasr-integration-tests",
       "Region": "us-east-1"
     }
   },
@@ -43,8 +43,8 @@
   "FunctionInvoke": "GetZentraData",
   "DefaultDataStore": "S3",
   "FunctionGitRepo": {
-    "download_zentra_readings": "FaaSr/FaaSr-Functions/Zentra/python",
-    "append_zentra_segment": "FaaSr/FaaSr-Functions/Zentra/python"
+    "download_zentra_readings": "JStover95/FaaSr-Integration-Tests/functions/Zentra",
+    "append_zentra_segment": "JStover95/FaaSr-Integration-Tests/functions/Zentra"
   },
   "PyPIPackageDownloads": {
     "download_zentra_readings": ["pandas", "requests"],
