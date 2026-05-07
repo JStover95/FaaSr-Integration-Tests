@@ -1,5 +1,10 @@
 import pandas as pd
-from FaaSr_py.client.py_client_stubs import faasr_get_file, faasr_log, faasr_put_file
+from FaaSr_py.client.py_client_stubs import (
+    faasr_get_file,
+    faasr_get_folder_list,
+    faasr_log,
+    faasr_put_file,
+)
 
 
 def _get_timestamp_column(df: pd.DataFrame) -> str:
@@ -10,6 +15,13 @@ def _get_timestamp_column(df: pd.DataFrame) -> str:
     raise ValueError(
         "Could not find timestamp column in CSV. Expected one of: "
         + ", ".join(candidates)
+    )
+
+
+def _complete_file_exists(complete_name: str) -> bool:
+    objects = faasr_get_folder_list(prefix=complete_name)
+    return any(
+        obj == complete_name or obj.endswith(f"/{complete_name}") for obj in objects
     )
 
 
@@ -41,8 +53,8 @@ def append_zentra_segment(serial_number: str):
         faasr_log("No valid timestamps found in latest segment; nothing to append")
         return
 
-    # 2) Try downloading the complete file. If it does not exist, create it from segment.
-    try:
+    # 2) Check if complete file exists before downloading it.
+    if _complete_file_exists(complete_name):
         faasr_get_file(
             local_file=complete_name,
             remote_folder="",
@@ -69,7 +81,7 @@ def append_zentra_segment(serial_number: str):
                 faasr_log(
                     f"Existing complete file found. Appended {len(new_rows)} new rows."
                 )
-    except Exception:
+    else:
         merged_df = segment_df.copy()
         faasr_log("No existing complete file found. Creating a new complete CSV.")
 
