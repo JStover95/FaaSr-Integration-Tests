@@ -1,0 +1,70 @@
+{
+  "ActionList": {
+    "GetZentraData": {
+      "Arguments": {
+        "serial_number": "z6-19594",
+        "num_hours": 24
+      },
+      "InvokeNext": ["AppendZentraData"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_zentra_readings"
+    },
+    "AppendZentraData": {
+      "Arguments": {
+        "serial_number": "z6-19594"
+      },
+      "InvokeNext": ["PostZentraSlack"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "append_zentra_segment"
+    },
+    "PostZentraSlack": {
+      "Arguments": {
+        "serial_number": "z6-19594",
+        "slack_channel": "#zentra-ingest"
+      },
+      "InvokeNext": [],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "post_zentra_summary_to_slack"
+    }
+  },
+  "ComputeServers": {
+    "GH": {
+      "FaaSType": "GitHubActions",
+      "UserName": "JStover95",
+      "UseSecretStore": true,
+      "ActionRepoName": "FaaSr-Integration-Tests",
+      "Branch": "main"
+    }
+  },
+  "DataStores": {
+    "S3": {
+      "Endpoint": "https://s3.us-east-1.amazonaws.com",
+      "Bucket": "faasr-integration-tests",
+      "Region": "us-east-1"
+    }
+  },
+  "ActionContainers": {
+    "GetZentraData": "ghcr.io/faasr/github-actions-python:latest",
+    "AppendZentraData": "ghcr.io/faasr/github-actions-python:latest",
+    "PostZentraSlack": "ghcr.io/faasr/github-actions-python:latest"
+  },
+  "FunctionInvoke": "GetZentraData",
+  "DefaultDataStore": "S3",
+  "FunctionGitRepo": {
+    "download_zentra_readings": "FaaSr/FaaSr-Functions/Zentra/python",
+    "append_zentra_segment": "FaaSr/FaaSr-Functions/Zentra/python",
+    "post_zentra_summary_to_slack": "FaaSr/FaaSr-Functions/Zentra/python"
+  },
+  "PyPIPackageDownloads": {
+    "download_zentra_readings": ["pandas", "requests"],
+    "append_zentra_segment": ["pandas"],
+    "post_zentra_summary_to_slack": ["pandas", "requests"]
+  },
+  "Secrets": ["ZENTRA_TOKEN", "SLACK_WEBHOOK_URL"],
+  "FaaSrLog": "FaaSrLog",
+  "LoggingDataStore": "S3",
+  "WorkflowName": "ZentraSlack"
+}
