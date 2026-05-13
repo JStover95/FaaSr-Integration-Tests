@@ -1,4 +1,5 @@
 import json
+import random
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -48,7 +49,11 @@ def get_readings_with_backoff(
     token: str,
     total_timeout_seconds: int = 120,
 ) -> requests.Response:
-    """Request Zentra readings with exponential backoff and a total timeout."""
+    """Request Zentra readings with exponential backoff, jittered waits, and a total timeout.
+
+    After each failure, wait time is ``X + U(0, X)`` seconds (``U`` uniform), where ``X`` is
+    the current backoff base (1, 2, 4, … capped at 16), then capped by remaining budget.
+    """
     start_time = time.monotonic()
     delay_seconds = 1
     max_delay_seconds = 16
@@ -80,10 +85,13 @@ def get_readings_with_backoff(
             if remaining <= 0:
                 break
 
-            sleep_seconds = min(delay_seconds, remaining)
+            base_delay = delay_seconds
+            jittered = base_delay + random.uniform(0, base_delay)
+            sleep_seconds = min(jittered, remaining)
             faasr_log(
                 f"Zentra request attempt {attempt} failed: {exc}. "
-                f"Retrying in {sleep_seconds:.1f}s"
+                f"Retrying in {sleep_seconds:.1f}s "
+                f"(base {base_delay}s + jitter up to {base_delay}s, capped by {remaining:.1f}s left)"
             )
             time.sleep(sleep_seconds)
             delay_seconds = min(delay_seconds * 2, max_delay_seconds)
