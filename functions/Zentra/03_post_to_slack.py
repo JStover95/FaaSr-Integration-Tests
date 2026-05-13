@@ -37,18 +37,14 @@ def _format_ts_range(ts_series: pd.Series) -> tuple[str, str]:
     return (str(mn), str(mx))
 
 
-def post_zentra_summary_to_slack(serial_number: str, slack_channel: str):
+def post_zentra_summary_to_slack(serial_number: str):
     """
     Download latest segment and complete CSVs, summarize, post to Slack.
 
     Credentials: ``faasr_secret("SLACK_WEBHOOK_URL")`` — Incoming Webhook URL.
-    Optional ``slack_channel`` (e.g. ``#alerts``) is sent in the webhook payload
-    when non-empty so the message can target a channel the app can post to.
 
     Args:
         serial_number: Device serial; must match prior workflow steps.
-        slack_channel: Slack channel name or ID (e.g. ``#zentra``). Empty string
-            omits ``channel`` from the payload (webhook default channel is used).
     """
     segments_folder = f"{serial_number}_segments"
     latest_local = "slack_latest.csv"
@@ -96,8 +92,6 @@ def post_zentra_summary_to_slack(serial_number: str, slack_channel: str):
     faasr_log("Posting summary to Slack via incoming webhook")
     webhook_url = faasr_secret("SLACK_WEBHOOK_URL")
     payload: dict = {"text": text}
-    if slack_channel and slack_channel.strip():
-        payload["channel"] = slack_channel.strip()
 
     response = requests.post(
         webhook_url,

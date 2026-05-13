@@ -4,7 +4,13 @@ from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 import requests
-from FaaSr_py.client.py_client_stubs import faasr_log, faasr_put_file, faasr_secret
+from FaaSr_py.client.py_client_stubs import (
+    faasr_get_file,
+    faasr_get_folder_list,
+    faasr_log,
+    faasr_put_file,
+    faasr_secret,
+)
 
 
 def get_with_credentials(token: str, uri: str, **kwargs) -> requests.Response:
@@ -88,15 +94,113 @@ def get_readings_with_backoff(
     ) from last_error
 
 
-def download_zentra_readings(serial_number: str, num_hours: int):
+def _get_timestamp_column(df: pd.DataFrame) -> str:
+    candidates = ("timestamp", "Timestamp", "date_time", "datetime", "time", "DateTime")
+    for col in candidates:
+        if col in df.columns:
+            return col
+    raise ValueError(
+        "Could not find timestamp column in CSV. Expected one of: "
+        + ", ".join(candidates)
+    )
+
+
+def _complete_file_exists(complete_name: str) -> bool:
+    objects = faasr_get_folder_list(prefix=complete_name)
+    return any(
+        obj == complete_name or obj.endswith(f"/{complete_name}") for obj in objects
+    )
+
+
+def _latest_timestamp_utc(complete_name: str, serial_number: str) -> datetime | None:
+    """Download complete CSV and return max timestamp as timezone-aware UTC, or None."""
+    local_complete = f"_get_data_{serial_number}_complete.csv"
+    faasr_get_file(
+        local_file=local_complete,
+        remote_folder="",
+        remote_file=complete_name,
+    )
+    df = pd.read_csv(local_complete)
+    if df.empty:
+        return None
+    ts_col = _get_timestamp_column(df)
+    ts = pd.to_datetime(df[ts_col], errors="coerce", utc=True)
+    ts = ts.dropna()
+    if ts.empty:
+        return None
+    last = ts.max()
+    if isinstance(last, pd.Timestamp):
+        return last.to_pydatetime()
+    return pd.Timestamp(last).to_pydatetime()
+
+
+def _compute_lookback_timedelta(
+    end_dt: datetime, min_hours: int, last_ts: datetime | None
+) -> timedelta:
     """
-    Download Zentra readings for the most recent `num_hours` and upload a timestamped CSV to S3.
+    Decide how far back to query the Zentra API.
+
+    - No prior complete file / no usable last row: ``min_hours``.
+    - If age from last row to now is at most ``min_hours``: still ``min_hours`` (minimum window).
+    - If age exceeds ``min_hours``: ``age + 1 hour`` (buffer against gaps).
+    """
+    min_td = timedelta(hours=int(min_hours))
+    if last_ts is None:
+        faasr_log(f"No usable last timestamp; using minimum lookback {min_hours}h")
+        return min_td
+
+    if last_ts.tzinfo is None:
+        last_ts = last_ts.replace(tzinfo=timezone.utc)
+    age = end_dt - last_ts
+    if age < timedelta(0):
+        faasr_log("Last timestamp is after current time; using minimum lookback")
+        return min_td
+
+    if age <= min_td:
+        faasr_log(
+            f"Last row age {age} <= min_hours ({min_hours}h); using minimum lookback"
+        )
+        return min_td
+
+    lookback = age + timedelta(hours=1)
+    faasr_log(
+        f"Last row age {age} > min_hours ({min_hours}h); "
+        f"using lookback {lookback} (age + 1h buffer)"
+    )
+    return lookback
+
+
+def download_zentra_readings(serial_number: str, min_hours: int):
+    """
+    Download Zentra readings using a minimum lookback and optional incremental window.
+
+    ``min_hours`` is always the minimum API window. If ``<serial>_complete.csv`` exists
+    and its latest row is older than ``min_hours``, the window expands to
+    (now - last_timestamp) plus one hour.
     """
     faasr_log("Retrieving Zentra token from secret store")
     token = faasr_secret("ZENTRA_TOKEN")
 
     end_dt = datetime.now(timezone.utc)
-    start_dt = end_dt - timedelta(hours=int(num_hours))
+    complete_name = f"{serial_number}_complete.csv"
+    last_ts: datetime | None = None
+
+    if _complete_file_exists(complete_name):
+        try:
+            last_ts = _latest_timestamp_utc(complete_name, serial_number)
+        except Exception as exc:
+            faasr_log(
+                f"Could not read last timestamp from {complete_name}: {exc}. "
+                f"Falling back to min_hours={min_hours}"
+            )
+            last_ts = None
+    else:
+        faasr_log(
+            f"No complete file {complete_name}; using minimum lookback {min_hours}h"
+        )
+
+    lookback = _compute_lookback_timedelta(end_dt, int(min_hours), last_ts)
+    start_dt = end_dt - lookback
     end_date = end_dt.strftime("%Y-%m-%d %H:%M:%S")
     start_date = start_dt.strftime("%Y-%m-%d %H:%M:%S")
 

@@ -3,7 +3,7 @@
     "GetZentraData": {
       "Arguments": {
         "serial_number": "z6-19594",
-        "num_hours": 24
+        "min_hours": 24
       },
       "InvokeNext": ["AppendZentraData"],
       "FaaSServer": "GH",
