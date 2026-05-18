@@ -2,7 +2,6 @@
   "ActionList": {
     "GetZentraData": {
       "Arguments": {
-        "folder": "integration-tests",
         "serial_numbers": ["z6-19594", "z6-12196"],
         "min_hours": 24
       },
@@ -12,9 +11,7 @@
       "FunctionName": "download_zentra_readings"
     },
     "AppendZentraData": {
-      "Arguments": {
-        "folder": "integration-tests"
-      },
+      "Arguments": {},
       "InvokeNext": [],
       "FaaSServer": "GH",
       "Type": "Python",
