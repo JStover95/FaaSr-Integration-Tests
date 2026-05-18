@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from framework.s3_client import FaaSrS3Client
+from framework.utils import failed, has_final_state, skipped, timed_out
 from framework.utils.enums import FunctionStatus
 from framework.workflow_runner import WorkflowRunner
 
@@ -26,6 +27,8 @@ class WorkflowTester:
 
     This class is responsible for:
     - Triggering a workflow
+    - Waiting for workflow completion
+    - Re-triggering a workflow after a completed run
     - Cleaning up resources
     - Asserting that objects exist in S3
     - Asserting that objects do not exist in S3
@@ -35,12 +38,62 @@ class WorkflowTester:
     """
 
     def __init__(self, test_invocation_id: str | None = None):
+        self._test_invocation_id = test_invocation_id
+        self._is_complete = True
+        self.runner: WorkflowRunner
+        self.trigger_workflow()
+
+    def trigger_workflow(self) -> None:
+        """
+        Trigger (or re-trigger) the workflow.
+
+        Raises:
+            RuntimeError: If a previous run is still in progress.
+        """
+        if not self._is_complete:
+            raise RuntimeError(
+                "Cannot trigger workflow: a run is still in progress. "
+                "Call wait_for_all() first."
+            )
+
+        if getattr(self, "runner", None) is not None:
+            self._cleanup_runner()
+
+        self._is_complete = False
         self.runner = WorkflowRunner.trigger_workflow(
             timeout=TIMEOUT,
             check_interval=CHECK_INTERVAL,
             stream_logs=True,
-            test_invocation_id=test_invocation_id,
+            test_invocation_id=self._test_invocation_id,
         )
+
+    def wait_for_all(self, should_throw: bool = True) -> None:
+        """
+        Wait for all functions in the workflow to finish.
+
+        Args:
+            should_throw: When True, raise if any function failed, was skipped,
+                or timed out. When False, wait regardless of final status.
+
+        Raises:
+            RuntimeError: If should_throw is True and any function failed,
+                was skipped, or timed out.
+        """
+        statuses = self.runner.get_function_statuses()
+        while not all(has_final_state(status) for status in statuses.values()):
+            time.sleep(CHECK_INTERVAL)
+            statuses = self.runner.get_function_statuses()
+
+        if should_throw:
+            for function_name, status in statuses.items():
+                if failed(status):
+                    raise RuntimeError(f"Function {function_name} failed")
+                if skipped(status):
+                    raise RuntimeError(f"Function {function_name} skipped")
+                if timed_out(status):
+                    raise RuntimeError(f"Function {function_name} timed out")
+
+        self._is_complete = True
 
     @property
     def s3_client(self) -> FaaSrS3Client:
@@ -53,23 +106,22 @@ class WorkflowTester:
     def __exit__(self, exc_type, exc_value, traceback):
         self._cleanup()
 
+    def _cleanup_runner(self) -> None:
+        """Shut down and clean up the current workflow runner."""
+        try:
+            if not self.runner.shutdown(timeout=10):
+                self.runner.force_shutdown()
+            self.runner.cleanup()
+        except Exception as e:
+            print(f"Warning: Error during cleanup: {e}")
+
     def _cleanup(self) -> bool:
         """
         Cleanup resources when exiting the context manager.
         This ensures proper thread cleanup even if an exception occurs.
         """
-        try:
-            # Attempt graceful shutdown first
-            if not self.runner.shutdown(timeout=10):
-                # If graceful shutdown fails, force shutdown
-                self.runner.force_shutdown()
-
-            # Perform comprehensive cleanup
-            self.runner.cleanup()
-
-        except Exception as e:
-            # Log cleanup errors but don't raise them to avoid masking original exceptions
-            print(f"Warning: Error during cleanup: {e}")
+        if getattr(self, "runner", None) is not None:
+            self._cleanup_runner()
 
         # Return False to not suppress any exceptions that occurred in the context
         return False
