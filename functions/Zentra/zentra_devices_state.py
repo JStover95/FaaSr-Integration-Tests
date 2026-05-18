@@ -18,11 +18,6 @@ DEVICE_COLUMNS = ["serial_number", "timestamp", "invocation_id"]
 EPOCH_UTC = pd.Timestamp("1970-01-01T00:00:00+00:00")
 
 
-def remote_path(invocation_id: str, file_name: str) -> str:
-    """S3 object path under the workflow folder: ``{invocation_id}/{file_name}``."""
-    return f"{invocation_id}/{file_name}"
-
-
 def normalize_serial_numbers(serial_numbers) -> list[str]:
     """Coerce workflow argument to a list of strings (supports JSON array string)."""
     if serial_numbers is None:
@@ -35,20 +30,18 @@ def normalize_serial_numbers(serial_numbers) -> list[str]:
     return [str(x) for x in serial_numbers]
 
 
-def devices_csv_exists(folder: str, invocation_id: str) -> bool:
-    remote_file = remote_path(invocation_id, DEVICES_FILE)
-    objects = faasr_get_folder_list(prefix=remote_file)
+def devices_csv_exists() -> bool:
+    objects = faasr_get_folder_list(prefix=DEVICES_FILE)
     return any(
-        obj == remote_file or obj.endswith(f"/{remote_file}") for obj in objects
+        obj == DEVICES_FILE or obj.endswith(f"/{DEVICES_FILE}") for obj in objects
     )
 
 
-def _load_devices(folder: str, invocation_id: str) -> pd.DataFrame:
-    remote_file = remote_path(invocation_id, DEVICES_FILE)
+def _load_devices() -> pd.DataFrame:
     faasr_get_file(
         local_file=DEVICES_FILE,
-        remote_folder=folder,
-        remote_file=remote_file,
+        remote_folder="",
+        remote_file=DEVICES_FILE,
     )
     df = pd.read_csv(DEVICES_FILE)
     for col in DEVICE_COLUMNS:
@@ -60,14 +53,13 @@ def _load_devices(folder: str, invocation_id: str) -> pd.DataFrame:
     return df
 
 
-def _save_devices(folder: str, invocation_id: str, df: pd.DataFrame) -> None:
-    remote_file = remote_path(invocation_id, DEVICES_FILE)
+def _save_devices(df: pd.DataFrame) -> None:
     out = df[DEVICE_COLUMNS].copy()
     out.to_csv(DEVICES_FILE, index=False)
     faasr_put_file(
         local_file=DEVICES_FILE,
-        remote_folder=folder,
-        remote_file=remote_file,
+        remote_folder="",
+        remote_file=DEVICES_FILE,
     )
 
 
@@ -77,9 +69,7 @@ def _ts_to_iso(ts) -> str:
     return pd.Timestamp(ts).isoformat()
 
 
-def select_and_claim_serial(
-    serial_numbers, invocation_id: str, folder: str
-) -> str:
+def select_and_claim_serial(serial_numbers, invocation_id: str) -> str:
     """
     Pick the device serial for this run and persist claim on ``devices.csv``.
 
@@ -99,7 +89,7 @@ def select_and_claim_serial(
     inv = str(invocation_id)
     now = pd.Timestamp.now(tz="UTC")
 
-    if not devices_csv_exists(folder, inv):
+    if not devices_csv_exists():
         df = pd.DataFrame(
             [
                 {
@@ -113,13 +103,11 @@ def select_and_claim_serial(
         first = serial_numbers[0]
         df.loc[df["serial_number"].astype(str) == first, "timestamp"] = now.isoformat()
         df.loc[df["serial_number"].astype(str) == first, "invocation_id"] = inv
-        _save_devices(folder, inv, df)
-        faasr_log(
-            f"Created {DEVICES_FILE}; claimed {first} for invocation {inv}"
-        )
+        _save_devices(df)
+        faasr_log(f"Created {DEVICES_FILE}; claimed {first} for invocation {inv}")
         return first
 
-    df = _load_devices(folder, inv)
+    df = _load_devices()
     df["serial_number"] = df["serial_number"].astype(str)
     in_set = set(serial_numbers)
     mask_tracked = df["serial_number"].isin(in_set)
@@ -158,22 +146,20 @@ def select_and_claim_serial(
     tracked["timestamp"] = tracked["timestamp"].map(_ts_to_iso)
 
     out = pd.concat([tracked, extras], ignore_index=True)
-    _save_devices(folder, inv, out)
+    _save_devices(out)
     faasr_log(f"Updated {DEVICES_FILE}; claimed {chosen} for invocation {inv}")
     return chosen
 
 
-def resolve_serial_for_invocation(
-    invocation_id: str, folder: str
-) -> str:
+def resolve_serial_for_invocation(invocation_id: str) -> str:
     """Return the serial number claimed for this invocation, or exit with error."""
     inv = str(invocation_id)
-    if not devices_csv_exists(folder, inv):
+    if not devices_csv_exists():
         faasr_exit(
             message=f"{DEVICES_FILE} not found; cannot resolve invocation {inv!r}",
             error=True,
         )
-    df = _load_devices(folder, inv)
+    df = _load_devices()
     match = df.loc[df["invocation_id"].astype(str) == inv, "serial_number"]
     if match.empty:
         faasr_exit(

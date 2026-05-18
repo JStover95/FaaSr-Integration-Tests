@@ -7,7 +7,7 @@ from FaaSr_py.client.py_client_stubs import (
     faasr_put_file,
 )
 
-from .zentra_devices_state import remote_path, resolve_serial_for_invocation
+from .zentra_devices_state import resolve_serial_for_invocation
 
 
 def _get_timestamp_column(df: pd.DataFrame) -> str:
@@ -21,34 +21,30 @@ def _get_timestamp_column(df: pd.DataFrame) -> str:
     )
 
 
-def _complete_file_exists(folder: str, remote_complete: str) -> bool:
-    objects = faasr_get_folder_list(prefix=remote_complete)
+def _complete_file_exists(complete_name: str) -> bool:
+    objects = faasr_get_folder_list(prefix=complete_name)
     return any(
-        obj == remote_complete or obj.endswith(f"/{remote_complete}") for obj in objects
+        obj == complete_name or obj.endswith(f"/{complete_name}") for obj in objects
     )
 
 
-def append_zentra_segment(folder: str):
+def append_zentra_segment():
     """
     Merge the latest segment CSV into the serial-specific complete CSV.
 
     Resolves ``serial_number`` from ``devices.csv`` using the current
     ``faasr_invocation_id()`` (must match the row updated by ``download_zentra_readings``).
     """
-    invocation_id = faasr_invocation_id()
-    faasr_log(f"Using invocation ID: {invocation_id}")
-
-    serial_number = resolve_serial_for_invocation(invocation_id, folder)
+    serial_number = resolve_serial_for_invocation(faasr_invocation_id())
+    segments_folder = f"{serial_number}_segments"
     segment_local = "latest.csv"
     complete_name = f"{serial_number}_complete.csv"
-    remote_latest = remote_path(invocation_id, f"{serial_number}_segments/latest.csv")
-    remote_complete = remote_path(invocation_id, complete_name)
 
     # 1) Download latest segment created by previous function.
     faasr_get_file(
         local_file=segment_local,
-        remote_folder=folder,
-        remote_file=remote_latest,
+        remote_folder=segments_folder,
+        remote_file="latest.csv",
     )
     segment_df = pd.read_csv(segment_local)
 
@@ -65,11 +61,11 @@ def append_zentra_segment(folder: str):
         return
 
     # 2) Check if complete file exists before downloading it.
-    if _complete_file_exists(folder, remote_complete):
+    if _complete_file_exists(complete_name):
         faasr_get_file(
             local_file=complete_name,
-            remote_folder=folder,
-            remote_file=remote_complete,
+            remote_folder="",
+            remote_file=complete_name,
         )
         complete_df = pd.read_csv(complete_name)
         if complete_df.empty:
@@ -99,7 +95,7 @@ def append_zentra_segment(folder: str):
     merged_df.to_csv(complete_name, index=False)
     faasr_put_file(
         local_file=complete_name,
-        remote_folder=folder,
-        remote_file=remote_complete,
+        remote_folder="",
+        remote_file=complete_name,
     )
-    faasr_log(f"Uploaded complete file: {remote_complete}")
+    faasr_log(f"Uploaded complete file: {complete_name}")

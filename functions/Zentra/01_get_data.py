@@ -14,7 +14,7 @@ from FaaSr_py.client.py_client_stubs import (
     faasr_secret,
 )
 
-from .zentra_devices_state import remote_path, select_and_claim_serial
+from .zentra_devices_state import select_and_claim_serial
 
 
 def get_with_credentials(token: str, uri: str, **kwargs) -> requests.Response:
@@ -116,22 +116,20 @@ def _get_timestamp_column(df: pd.DataFrame) -> str:
     )
 
 
-def _complete_file_exists(folder: str, remote_complete: str) -> bool:
-    objects = faasr_get_folder_list(prefix=remote_complete)
+def _complete_file_exists(complete_name: str) -> bool:
+    objects = faasr_get_folder_list(prefix=complete_name)
     return any(
-        obj == remote_complete or obj.endswith(f"/{remote_complete}") for obj in objects
+        obj == complete_name or obj.endswith(f"/{complete_name}") for obj in objects
     )
 
 
-def _latest_timestamp_utc(
-    folder: str, remote_complete: str, serial_number: str
-) -> datetime | None:
+def _latest_timestamp_utc(complete_name: str, serial_number: str) -> datetime | None:
     """Download complete CSV and return max timestamp as timezone-aware UTC, or None."""
     local_complete = f"_get_data_{serial_number}_complete.csv"
     faasr_get_file(
         local_file=local_complete,
-        remote_folder=folder,
-        remote_file=remote_complete,
+        remote_folder="",
+        remote_file=complete_name,
     )
     df = pd.read_csv(local_complete)
     if df.empty:
@@ -183,7 +181,7 @@ def _compute_lookback_timedelta(
     return lookback
 
 
-def download_zentra_readings(serial_numbers, min_hours: int, folder: str):
+def download_zentra_readings(serial_numbers, min_hours: int):
     """
     Download Zentra readings using a minimum lookback and optional incremental window.
 
@@ -194,10 +192,7 @@ def download_zentra_readings(serial_numbers, min_hours: int, folder: str):
     and its latest row is older than ``min_hours``, the window expands to
     (now - last_timestamp) plus one hour.
     """
-    invocation_id = faasr_invocation_id()
-    faasr_log(f"Using invocation ID: {invocation_id}")
-
-    serial_number = select_and_claim_serial(serial_numbers, invocation_id, folder)
+    serial_number = select_and_claim_serial(serial_numbers, faasr_invocation_id())
     faasr_log(f"Selected device serial {serial_number} for this invocation")
 
     faasr_log("Retrieving Zentra token from secret store")
@@ -205,12 +200,11 @@ def download_zentra_readings(serial_numbers, min_hours: int, folder: str):
 
     end_dt = datetime.now(timezone.utc)
     complete_name = f"{serial_number}_complete.csv"
-    remote_complete = remote_path(invocation_id, complete_name)
     last_ts: datetime | None = None
 
-    if _complete_file_exists(folder, remote_complete):
+    if _complete_file_exists(complete_name):
         try:
-            last_ts = _latest_timestamp_utc(folder, remote_complete, serial_number)
+            last_ts = _latest_timestamp_utc(complete_name, serial_number)
         except Exception as exc:
             faasr_log(
                 f"Could not read last timestamp from {complete_name}: {exc}. "
@@ -242,24 +236,19 @@ def download_zentra_readings(serial_numbers, min_hours: int, folder: str):
 
     timestamp = end_dt.strftime("%Y%m%dT%H%M%SZ")
     output_name = f"zentra_{serial_number}_{timestamp}.csv"
-    remote_segment = remote_path(
-        invocation_id, f"{serial_number}_segments/{output_name}"
-    )
-    remote_latest = remote_path(invocation_id, f"{serial_number}_segments/latest.csv")
+    segments_folder = f"{serial_number}_segments"
     readings_df.to_csv(output_name, index=False)
 
     faasr_put_file(
         local_file=output_name,
-        remote_folder=folder,
-        remote_file=remote_segment,
+        remote_folder=segments_folder,
+        remote_file=output_name,
     )
     # Upload a stable pointer file for downstream append step.
     faasr_put_file(
         local_file=output_name,
-        remote_folder=folder,
-        remote_file=remote_latest,
+        remote_folder=segments_folder,
+        remote_file="latest.csv",
     )
 
-    faasr_log(
-        f"Uploaded Zentra readings to {invocation_id}/{serial_number}_segments/{output_name}"
-    )
+    faasr_log(f"Uploaded Zentra readings to {segments_folder}/{output_name}")
