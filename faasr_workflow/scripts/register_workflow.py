@@ -72,7 +72,7 @@ def generate_github_secret_imports(faasr_payload):
     # Add secrets for compute servers
     for faas_name, compute_server in faasr_payload.get("ComputeServers", {}).items():
         faas_type = compute_server.get("FaaSType", "")
-        match faas_type:
+        match (faas_type):
             case "GitHubActions":
                 pat_secret = f"{faas_name}_PAT"
                 import_statements.append(
@@ -343,9 +343,8 @@ def deploy_to_github(workflow_data):
 def get_lambda_credentials(workflow_data):
     """Fetches AWS Lambda credentials from environment variables"""
     # Get AWS credentials
-    aws_access_key, aws_secret_key = (
-        os.getenv("AWS_AccessKey"),
-        os.getenv("AWS_SecretKey"),
+    aws_access_key, aws_secret_key = os.getenv("AWS_AccessKey"), os.getenv(
+        "AWS_SecretKey"
     )
 
     # Fail if AWS creds not set
@@ -612,7 +611,6 @@ def deploy_to_ow(workflow_data):
         try:
             # Create prefixed function name using workflow_name-action_name format
             prefixed_func_name = f"{json_prefix}-{action_name}"
-            logger.info(f"Prefixed function name: {prefixed_func_name}")
 
             # Create or update OpenWhisk action using wsk CLI
             try:
@@ -809,8 +807,8 @@ def deploy_to_gcp(workflow_data):
         service_account = gcp_server_config.get("ClientEmail")
         if not service_account:
             logger.error(
-                "ClientEmail (service account) is required for GoogleCloud server "
-                "but not found in ComputeServers configuration"
+                f"ClientEmail (service account) is required for GoogleCloud server "
+                f"but not found in ComputeServers configuration"
             )
             sys.exit(1)
 
@@ -904,8 +902,8 @@ def deploy_to_slurm(workflow_data):
         )
 
     logger.info(
-        "SLURM configuration validated successfully. "
-        "No persistent resources created - jobs will be submitted at invocation time."
+        f"SLURM configuration validated successfully. "
+        f"No persistent resources created - jobs will be submitted at invocation time."
     )
 
 

@@ -601,13 +601,14 @@ class TestWorkflowRunnerTriggerWorkflow:
     def test_trigger_workflow_passes_test_invocation_id(
         self, mock_main, mock_start, with_mock_env: None
     ):
-        """Test that trigger_workflow forwards test_invocation_id to invoke_workflow.main"""
+        """Test that trigger_workflow applies test_invocation_id after invoke_workflow.main"""
         mock_main.return_value = workflow_data()
 
-        WorkflowRunner.trigger_workflow(
+        runner = WorkflowRunner.trigger_workflow(
             timeout=120,
             check_interval=1,
             test_invocation_id="custom-id",
         )
 
-        mock_main.assert_called_once_with(testing=True, test_invocation_id="custom-id")
+        mock_main.assert_called_once_with(testing=True)
+        assert runner.invocation_id == "custom-id"

@@ -608,7 +608,9 @@ class WorkflowRunner:
         Returns:
             WorkflowRunner: The initialized workflow runner.
         """
-        faasr_payload = main(testing=True, test_invocation_id=test_invocation_id)
+        faasr_payload = main(testing=True)
+        if test_invocation_id is not None:
+            faasr_payload["InvocationID"] = test_invocation_id
         runner = cls(
             faasr_payload=faasr_payload,
             timeout=timeout,
