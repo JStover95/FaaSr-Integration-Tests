@@ -85,6 +85,17 @@ def tester(workflow_file):
         yield tester
 ```
 
+To override the workflow invocation ID (for example, to assert against known S3 paths), pass `test_invocation_id`:
+
+```python
+@pytest.fixture(scope="module", autouse=True)
+def tester(workflow_file):
+    with workflow_file(
+        "workflows/FaaSrSecretWorkflow.json", test_invocation_id="some_id"
+    ) as base_tester:
+        yield base_tester
+```
+
 You can now use this tester to make assertions against your workflow.
 
 ### Waiting for Function Completion

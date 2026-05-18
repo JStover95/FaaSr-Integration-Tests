@@ -34,11 +34,12 @@ class WorkflowTester:
     - Asserting that a function has not been invoked.
     """
 
-    def __init__(self):
+    def __init__(self, test_invocation_id: str | None = None):
         self.runner = WorkflowRunner.trigger_workflow(
             timeout=TIMEOUT,
             check_interval=CHECK_INTERVAL,
             stream_logs=True,
+            test_invocation_id=test_invocation_id,
         )
 
     @property
@@ -198,14 +199,14 @@ class WorkflowTester:
 @pytest.fixture(scope="session")
 def workflow_file():
     @contextmanager
-    def wrapper(workflow_file: str):
+    def wrapper(workflow_file: str, test_invocation_id: str | None = None):
         with mock.patch(
             "faasr_workflow.scripts.invoke_workflow.argparse.ArgumentParser.parse_args"
         ) as mock_parse_args:
             mock_parse_args.return_value = argparse.Namespace(
                 workflow_file=workflow_file
             )
-            with WorkflowTester() as tester:
+            with WorkflowTester(test_invocation_id=test_invocation_id) as tester:
                 yield tester
 
     return wrapper

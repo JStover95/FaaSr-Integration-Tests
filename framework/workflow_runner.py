@@ -594,6 +594,7 @@ class WorkflowRunner:
         timeout: int,
         check_interval: int,
         stream_logs: bool = False,
+        test_invocation_id: str | None = None,
     ) -> "WorkflowRunner":
         """
         Trigger a workflow and initialize the workflow runner.
@@ -602,11 +603,12 @@ class WorkflowRunner:
             timeout: The timeout for the monitoring thread.
             check_interval: The interval for the monitoring thread.
             stream_logs: Whether to stream the logs to the console.
+            test_invocation_id: Optional invocation ID override when testing.
 
         Returns:
             WorkflowRunner: The initialized workflow runner.
         """
-        faasr_payload = main(testing=True)
+        faasr_payload = main(testing=True, test_invocation_id=test_invocation_id)
         runner = cls(
             faasr_payload=faasr_payload,
             timeout=timeout,
