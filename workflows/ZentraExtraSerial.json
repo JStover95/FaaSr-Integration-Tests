@@ -3,7 +3,7 @@
     "GetZentraData": {
       "Arguments": {
         "folder": "integration-tests",
-        "serial_numbers": ["z6-19594", "z6-12196"],
+        "serial_numbers": ["z6-19594", "z6-12196", "z6-12202"],
         "min_hours": 24
       },
       "InvokeNext": ["AppendZentraData"],
