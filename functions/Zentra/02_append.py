@@ -6,7 +6,8 @@ from FaaSr_py.client.py_client_stubs import (
     faasr_log,
     faasr_put_file,
 )
-from zentra_devices_state import remote_path, resolve_serial_for_invocation
+
+from .zentra_devices_state import remote_path, resolve_serial_for_invocation
 
 
 def _get_timestamp_column(df: pd.DataFrame) -> str:
@@ -23,8 +24,7 @@ def _get_timestamp_column(df: pd.DataFrame) -> str:
 def _complete_file_exists(folder: str, remote_complete: str) -> bool:
     objects = faasr_get_folder_list(prefix=remote_complete)
     return any(
-        obj == remote_complete or obj.endswith(f"/{remote_complete}")
-        for obj in objects
+        obj == remote_complete or obj.endswith(f"/{remote_complete}") for obj in objects
     )
 
 

@@ -13,7 +13,8 @@ from FaaSr_py.client.py_client_stubs import (
     faasr_put_file,
     faasr_secret,
 )
-from zentra_devices_state import remote_path, select_and_claim_serial
+
+from .zentra_devices_state import remote_path, select_and_claim_serial
 
 
 def get_with_credentials(token: str, uri: str, **kwargs) -> requests.Response:
@@ -118,8 +119,7 @@ def _get_timestamp_column(df: pd.DataFrame) -> str:
 def _complete_file_exists(folder: str, remote_complete: str) -> bool:
     objects = faasr_get_folder_list(prefix=remote_complete)
     return any(
-        obj == remote_complete or obj.endswith(f"/{remote_complete}")
-        for obj in objects
+        obj == remote_complete or obj.endswith(f"/{remote_complete}") for obj in objects
     )
 
 
@@ -197,9 +197,7 @@ def download_zentra_readings(serial_numbers, min_hours: int, folder: str):
     invocation_id = faasr_invocation_id()
     faasr_log(f"Using invocation ID: {invocation_id}")
 
-    serial_number = select_and_claim_serial(
-        serial_numbers, invocation_id, folder
-    )
+    serial_number = select_and_claim_serial(serial_numbers, invocation_id, folder)
     faasr_log(f"Selected device serial {serial_number} for this invocation")
 
     faasr_log("Retrieving Zentra token from secret store")
@@ -244,7 +242,9 @@ def download_zentra_readings(serial_numbers, min_hours: int, folder: str):
 
     timestamp = end_dt.strftime("%Y%m%dT%H%M%SZ")
     output_name = f"zentra_{serial_number}_{timestamp}.csv"
-    remote_segment = remote_path(invocation_id, f"{serial_number}_segments/{output_name}")
+    remote_segment = remote_path(
+        invocation_id, f"{serial_number}_segments/{output_name}"
+    )
     remote_latest = remote_path(invocation_id, f"{serial_number}_segments/latest.csv")
     readings_df.to_csv(output_name, index=False)
 
