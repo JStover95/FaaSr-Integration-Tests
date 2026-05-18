@@ -301,8 +301,10 @@ def workflow_file():
     def wrapper(
         workflow_file: str,
         test_invocation_id: str | None = None,
+        invocation_id: str | None = None,
         num_invocations: int | None = None,
     ):
+        resolved_invocation_id = test_invocation_id or invocation_id
         with mock.patch(
             "faasr_workflow.scripts.invoke_workflow.argparse.ArgumentParser.parse_args"
         ) as mock_parse_args:
@@ -310,7 +312,7 @@ def workflow_file():
                 workflow_file=workflow_file
             )
             with WorkflowTester(
-                test_invocation_id=test_invocation_id,
+                test_invocation_id=resolved_invocation_id,
                 num_invocations=num_invocations,
             ) as tester:
                 yield tester
