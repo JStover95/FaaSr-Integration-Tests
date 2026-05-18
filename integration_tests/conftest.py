@@ -26,9 +26,8 @@ class WorkflowTester:
     A tester for a FaaSr workflow.
 
     This class is responsible for:
-    - Triggering a workflow
-    - Waiting for workflow completion
-    - Re-triggering a workflow after a completed run
+    - Triggering and re-triggering a workflow across multiple invocations
+    - Waiting for workflow and function completion
     - Cleaning up resources
     - Asserting that objects exist in S3
     - Asserting that objects do not exist in S3
@@ -37,24 +36,27 @@ class WorkflowTester:
     - Asserting that a function has not been invoked.
     """
 
-    def __init__(self, test_invocation_id: str | None = None):
+    def __init__(
+        self,
+        test_invocation_id: str | None = None,
+        num_invocations: int | None = None,
+    ):
         self._test_invocation_id = test_invocation_id
+        self._requires_invocation_num = num_invocations is not None
+        self._num_invocations = num_invocations if num_invocations is not None else 1
+
+        if self._num_invocations < 1:
+            raise ValueError("num_invocations must be at least 1")
+
+        self._current_invocation = 0
         self._is_complete = True
         self.runner: WorkflowRunner
-        self.trigger_workflow()
+        self._trigger_workflow()
 
-    def trigger_workflow(self) -> None:
-        """
-        Trigger (or re-trigger) the workflow.
-
-        Raises:
-            RuntimeError: If a previous run is still in progress.
-        """
+    def _trigger_workflow(self) -> None:
+        """Trigger (or re-trigger) the workflow."""
         if not self._is_complete:
-            raise RuntimeError(
-                "Cannot trigger workflow: a run is still in progress. "
-                "Call wait_for_all() first."
-            )
+            raise RuntimeError("Cannot trigger workflow: a run is still in progress.")
 
         if getattr(self, "runner", None) is not None:
             self._cleanup_runner()
@@ -66,34 +68,46 @@ class WorkflowTester:
             stream_logs=True,
             test_invocation_id=self._test_invocation_id,
         )
+        self._current_invocation += 1
 
-    def wait_for_all(self, should_throw: bool = True) -> None:
+    def _wait_for_all(self) -> None:
         """
         Wait for all functions in the workflow to finish.
 
-        Args:
-            should_throw: When True, raise if any function failed, was skipped,
-                or timed out. When False, wait regardless of final status.
-
         Raises:
-            RuntimeError: If should_throw is True and any function failed,
-                was skipped, or timed out.
+            RuntimeError: If any function failed, was skipped, or timed out.
         """
         statuses = self.runner.get_function_statuses()
         while not all(has_final_state(status) for status in statuses.values()):
             time.sleep(CHECK_INTERVAL)
             statuses = self.runner.get_function_statuses()
 
-        if should_throw:
-            for function_name, status in statuses.items():
-                if failed(status):
-                    raise RuntimeError(f"Function {function_name} failed")
-                if skipped(status):
-                    raise RuntimeError(f"Function {function_name} skipped")
-                if timed_out(status):
-                    raise RuntimeError(f"Function {function_name} timed out")
+        for function_name, status in statuses.items():
+            if failed(status):
+                raise RuntimeError(f"Function {function_name} failed")
+            if skipped(status):
+                raise RuntimeError(f"Function {function_name} skipped")
+            if timed_out(status):
+                raise RuntimeError(f"Function {function_name} timed out")
 
         self._is_complete = True
+
+    def _ensure_invocation(self, invocation_num: int) -> None:
+        """Advance workflow invocations until the current one matches invocation_num."""
+        while self._current_invocation < invocation_num:
+            self._wait_for_all()
+            if self._current_invocation >= self._num_invocations:
+                raise RuntimeError(
+                    f"Cannot advance to invocation {invocation_num}: "
+                    f"only {self._num_invocations} invocation(s) configured"
+                )
+            self._trigger_workflow()
+
+        if self._current_invocation > invocation_num:
+            raise RuntimeError(
+                f"Cannot wait for invocation {invocation_num}: "
+                f"already at invocation {self._current_invocation}"
+            )
 
     @property
     def s3_client(self) -> FaaSrS3Client:
@@ -104,6 +118,11 @@ class WorkflowTester:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        if not self._is_complete:
+            try:
+                self._wait_for_all()
+            except Exception:
+                pass
         self._cleanup()
 
     def _cleanup_runner(self) -> None:
@@ -123,7 +142,6 @@ class WorkflowTester:
         if getattr(self, "runner", None) is not None:
             self._cleanup_runner()
 
-        # Return False to not suppress any exceptions that occurred in the context
         return False
 
     def get_s3_key(self, file_name: str) -> str:
@@ -138,19 +156,48 @@ class WorkflowTester:
         """
         return f"integration-tests/{self.runner.invocation_id}/{file_name}"
 
-    def wait_for(self, function_name: str, should_fail: bool = False) -> FunctionStatus:
+    def wait_for(
+        self,
+        function_name: str,
+        should_fail: bool = False,
+        invocation_num: int | None = None,
+    ) -> FunctionStatus:
         """
         Wait for a function to complete.
 
+        When num_invocations was set on the tester, invocation_num is required and
+        must be in [1, num_invocations]. The tester advances through workflow
+        invocations automatically until the requested invocation is active.
+
         Args:
             function_name: The name of the function to wait for.
+            should_fail: When True, do not raise if the function failed.
+            invocation_num: The workflow invocation to wait on (required when
+                num_invocations was set on the tester).
 
         Returns:
             The status of the function.
 
         Raises:
-            Exception: If the function failed, skipped, timed out, or not invoked.
+            ValueError: If invocation_num is missing or out of range.
+            RuntimeError: If the function failed, was skipped, or timed out.
         """
+        if self._requires_invocation_num:
+            if invocation_num is None:
+                raise ValueError(
+                    "invocation_num is required when num_invocations is set on the tester"
+                )
+        else:
+            invocation_num = invocation_num or self._current_invocation
+
+        if not 1 <= invocation_num <= self._num_invocations:
+            raise ValueError(
+                f"invocation_num must be between 1 and {self._num_invocations}, "
+                f"got {invocation_num}"
+            )
+
+        self._ensure_invocation(invocation_num)
+
         status = self.runner.get_function_statuses()[function_name]
         while not (
             status == FunctionStatus.COMPLETED
@@ -163,11 +210,11 @@ class WorkflowTester:
             status = self.runner.get_function_statuses()[function_name]
 
         if not should_fail and status == FunctionStatus.FAILED:
-            raise Exception(f"Function {function_name} failed")
+            raise RuntimeError(f"Function {function_name} failed")
         elif status == FunctionStatus.SKIPPED:
-            raise Exception(f"Function {function_name} skipped")
+            raise RuntimeError(f"Function {function_name} skipped")
         elif status == FunctionStatus.TIMEOUT:
-            raise Exception(f"Function {function_name} timed out")
+            raise RuntimeError(f"Function {function_name} timed out")
 
         return status
 
@@ -251,14 +298,21 @@ class WorkflowTester:
 @pytest.fixture(scope="session")
 def workflow_file():
     @contextmanager
-    def wrapper(workflow_file: str, test_invocation_id: str | None = None):
+    def wrapper(
+        workflow_file: str,
+        test_invocation_id: str | None = None,
+        num_invocations: int | None = None,
+    ):
         with mock.patch(
             "faasr_workflow.scripts.invoke_workflow.argparse.ArgumentParser.parse_args"
         ) as mock_parse_args:
             mock_parse_args.return_value = argparse.Namespace(
                 workflow_file=workflow_file
             )
-            with WorkflowTester(test_invocation_id=test_invocation_id) as tester:
+            with WorkflowTester(
+                test_invocation_id=test_invocation_id,
+                num_invocations=num_invocations,
+            ) as tester:
                 yield tester
 
     return wrapper
