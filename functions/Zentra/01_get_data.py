@@ -243,9 +243,3 @@ def download_zentra_readings(serial_number: str, min_hours: int):
     )
 
     faasr_log(f"Uploaded Zentra readings to {segments_folder}/{output_name}")
-
-
-def no_op():
-    """No-op function to allow for multiple GetZentraData actions."""
-    faasr_log("No-op function called")
-    return
