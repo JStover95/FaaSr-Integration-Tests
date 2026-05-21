@@ -38,7 +38,9 @@
       "FunctionName": "download_zentra_readings"
     },
     "AppendZentraData": {
-      "serial_numbers": ["z6-19594", "z6-12196", "z6-12202"],
+      "Arguments": {
+        "serial_numbers": ["z6-19594", "z6-12196", "z6-12202"]
+      },
       "InvokeNext": [],
       "FaaSServer": "GH",
       "Type": "Python",
