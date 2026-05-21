@@ -5,12 +5,9 @@ import requests
 from FaaSr_py.client.py_client_stubs import (
     faasr_get_file,
     faasr_get_folder_list,
-    faasr_invocation_id,
     faasr_log,
     faasr_secret,
 )
-
-from .zentra_devices_state import resolve_serial_for_invocation
 
 
 def _get_timestamp_column(df: pd.DataFrame) -> str:
@@ -40,21 +37,15 @@ def _format_ts_range(ts_series: pd.Series) -> tuple[str, str]:
     return (str(mn), str(mx))
 
 
-def post_zentra_summary_to_slack(slack_channel: str):
+def post_zentra_summary_to_slack(serial_number: str):
     """
     Download latest segment and complete CSVs, summarize, post to Slack.
 
-    Resolves ``serial_number`` from ``devices.csv`` using ``faasr_invocation_id()``.
-
     Credentials: ``faasr_secret("SLACK_WEBHOOK_URL")`` — Incoming Webhook URL.
-    Optional ``slack_channel`` (e.g. ``#alerts``) is sent in the webhook payload
-    when non-empty so the message can target a channel the app can post to.
 
     Args:
-        slack_channel: Slack channel name or ID (e.g. ``#zentra``). Empty string
-            omits ``channel`` from the payload (webhook default channel is used).
+        serial_number: Device serial; must match prior workflow steps.
     """
-    serial_number = resolve_serial_for_invocation(faasr_invocation_id())
     segments_folder = f"{serial_number}_segments"
     latest_local = "slack_latest.csv"
     complete_name = f"{serial_number}_complete.csv"
@@ -101,8 +92,6 @@ def post_zentra_summary_to_slack(slack_channel: str):
     faasr_log("Posting summary to Slack via incoming webhook")
     webhook_url = faasr_secret("SLACK_WEBHOOK_URL")
     payload: dict = {"text": text}
-    if slack_channel and slack_channel.strip():
-        payload["channel"] = slack_channel.strip()
 
     response = requests.post(
         webhook_url,

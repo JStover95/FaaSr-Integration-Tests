@@ -2,12 +2,9 @@ import pandas as pd
 from FaaSr_py.client.py_client_stubs import (
     faasr_get_file,
     faasr_get_folder_list,
-    faasr_invocation_id,
     faasr_log,
     faasr_put_file,
 )
-
-from .zentra_devices_state import resolve_serial_for_invocation
 
 
 def _get_timestamp_column(df: pd.DataFrame) -> str:
@@ -28,14 +25,10 @@ def _complete_file_exists(complete_name: str) -> bool:
     )
 
 
-def append_zentra_segment():
+def append_zentra_segment(serial_number: str):
     """
     Merge the latest segment CSV into the serial-specific complete CSV.
-
-    Resolves ``serial_number`` from ``devices.csv`` using the current
-    ``faasr_invocation_id()`` (must match the row updated by ``download_zentra_readings``).
     """
-    serial_number = resolve_serial_for_invocation(faasr_invocation_id())
     segments_folder = f"{serial_number}_segments"
     segment_local = "latest.csv"
     complete_name = f"{serial_number}_complete.csv"
@@ -99,3 +92,11 @@ def append_zentra_segment():
         remote_file=complete_name,
     )
     faasr_log(f"Uploaded complete file: {complete_name}")
+
+
+def append_zentra_segments(serial_numbers: list[str]):
+    """
+    Append all Zentra segments for a list of serial numbers.
+    """
+    for serial_number in serial_numbers:
+        append_zentra_segment(serial_number)

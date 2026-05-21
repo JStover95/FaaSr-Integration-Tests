@@ -1,8 +1,35 @@
 {
   "ActionList": {
-    "GetZentraData": {
+    "NoOp": {
+      "Arguments": {},
+      "InvokeNext": ["GetZentraData1", "GetZentraData2", "GetZentraData3"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "no_op"
+    },
+    "GetZentraData1": {
       "Arguments": {
-        "serial_numbers": ["z6-12196", "z6-12202"],
+        "serial_number": "z6-19594",
+        "min_hours": 24
+      },
+      "InvokeNext": ["AppendZentraData"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_zentra_readings"
+    },
+    "GetZentraData2": {
+      "Arguments": {
+        "serial_number": "z6-12196",
+        "min_hours": 24
+      },
+      "InvokeNext": ["AppendZentraData"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_zentra_readings"
+    },
+    "GetZentraData3": {
+      "Arguments": {
+        "serial_number": "z6-12202",
         "min_hours": 24
       },
       "InvokeNext": ["AppendZentraData"],
@@ -11,11 +38,11 @@
       "FunctionName": "download_zentra_readings"
     },
     "AppendZentraData": {
-      "Arguments": {},
+      "serial_numbers": ["z6-19594", "z6-12196", "z6-12202"],
       "InvokeNext": [],
       "FaaSServer": "GH",
       "Type": "Python",
-      "FunctionName": "append_zentra_segment"
+      "FunctionName": "append_zentra_segments"
     }
   },
   "ComputeServers": {
@@ -42,11 +69,11 @@
   "DefaultDataStore": "S3",
   "FunctionGitRepo": {
     "download_zentra_readings": "JStover95/FaaSr-Integration-Tests/functions/Zentra",
-    "append_zentra_segment": "JStover95/FaaSr-Integration-Tests/functions/Zentra"
+    "append_zentra_segments": "JStover95/FaaSr-Integration-Tests/functions/Zentra"
   },
   "PyPIPackageDownloads": {
     "download_zentra_readings": ["pandas", "requests"],
-    "append_zentra_segment": ["pandas"]
+    "append_zentra_segments": ["pandas"]
   },
   "Secrets": ["ZENTRA_TOKEN"],
   "FaaSrLog": "FaaSrLog",

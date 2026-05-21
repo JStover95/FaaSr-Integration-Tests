@@ -8,13 +8,10 @@ import requests
 from FaaSr_py.client.py_client_stubs import (
     faasr_get_file,
     faasr_get_folder_list,
-    faasr_invocation_id,
     faasr_log,
     faasr_put_file,
     faasr_secret,
 )
-
-from .zentra_devices_state import select_and_claim_serial
 
 
 def get_with_credentials(token: str, uri: str, **kwargs) -> requests.Response:
@@ -181,20 +178,14 @@ def _compute_lookback_timedelta(
     return lookback
 
 
-def download_zentra_readings(serial_numbers, min_hours: int):
+def download_zentra_readings(serial_number: str, min_hours: int):
     """
     Download Zentra readings using a minimum lookback and optional incremental window.
-
-    ``serial_numbers`` is a non-empty list of device serials; ``devices.csv`` on S3
-    tracks rotation and which serial is claimed for this invocation.
 
     ``min_hours`` is always the minimum API window. If ``<serial>_complete.csv`` exists
     and its latest row is older than ``min_hours``, the window expands to
     (now - last_timestamp) plus one hour.
     """
-    serial_number = select_and_claim_serial(serial_numbers, faasr_invocation_id())
-    faasr_log(f"Selected device serial {serial_number} for this invocation")
-
     faasr_log("Retrieving Zentra token from secret store")
     token = faasr_secret("ZENTRA_TOKEN")
 
@@ -252,3 +243,9 @@ def download_zentra_readings(serial_numbers, min_hours: int):
     )
 
     faasr_log(f"Uploaded Zentra readings to {segments_folder}/{output_name}")
+
+
+def no_op():
+    """No-op function to allow for multiple GetZentraData actions."""
+    faasr_log("No-op function called")
+    return
