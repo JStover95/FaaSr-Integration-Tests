@@ -63,10 +63,12 @@
   },
   "ActionContainers": {
     "NoOp": "ghcr.io/faasr/github-actions-python:latest",
-    "GetZentraData": "ghcr.io/faasr/github-actions-python:latest",
+    "GetZentraData1": "ghcr.io/faasr/github-actions-python:latest",
+    "GetZentraData2": "ghcr.io/faasr/github-actions-python:latest",
+    "GetZentraData3": "ghcr.io/faasr/github-actions-python:latest",
     "AppendZentraData": "ghcr.io/faasr/github-actions-python:latest"
   },
-  "FunctionInvoke": "GetZentraData",
+  "FunctionInvoke": "NoOp",
   "DefaultDataStore": "S3",
   "FunctionGitRepo": {
     "no_op": "JStover95/FaaSr-Integration-Tests/functions/Zentra",
