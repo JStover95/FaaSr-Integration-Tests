@@ -2,14 +2,28 @@
   "ActionList": {
     "NoOp": {
       "Arguments": {},
-      "InvokeNext": ["GetZentraData1", "GetZentraData2", "GetZentraData3"],
+      "InvokeNext": [
+        "GetZentraData1",
+        "GetZentraData2",
+        "GetZentraData3",
+        "GetZentraData4",
+        "GetZentraData5",
+        "GetZentraData6",
+        "GetZentraData7",
+        "GetZentraData8",
+        "GetZentraData9",
+        "GetZentraData10",
+        "GetZentraData11",
+        "GetZentraData12",
+        "GetZentraData13"
+      ],
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "no_op"
     },
     "GetZentraData1": {
       "Arguments": {
-        "serial_number": "z6-19594",
+        "serial_number": "z6-19604",
         "min_hours": 24
       },
       "InvokeNext": ["AppendZentraData"],
@@ -19,7 +33,7 @@
     },
     "GetZentraData2": {
       "Arguments": {
-        "serial_number": "z6-12196",
+        "serial_number": "z6-19594",
         "min_hours": 24
       },
       "InvokeNext": ["AppendZentraData"],
@@ -37,9 +51,123 @@
       "Type": "Python",
       "FunctionName": "download_zentra_readings"
     },
+    "GetZentraData4": {
+      "Arguments": {
+        "serial_number": "z6-12197",
+        "min_hours": 24
+      },
+      "InvokeNext": ["AppendZentraData"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_zentra_readings"
+    },
+    "GetZentraData5": {
+      "Arguments": {
+        "serial_number": "z6-19595",
+        "min_hours": 24
+      },
+      "InvokeNext": ["AppendZentraData"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_zentra_readings"
+    },
+    "GetZentraData6": {
+      "Arguments": {
+        "serial_number": "z6-19603",
+        "min_hours": 24
+      },
+      "InvokeNext": ["AppendZentraData"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_zentra_readings"
+    },
+    "GetZentraData7": {
+      "Arguments": {
+        "serial_number": "z6-19600",
+        "min_hours": 24
+      },
+      "InvokeNext": ["AppendZentraData"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_zentra_readings"
+    },
+    "GetZentraData8": {
+      "Arguments": {
+        "serial_number": "z6-19597",
+        "min_hours": 24
+      },
+      "InvokeNext": ["AppendZentraData"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_zentra_readings"
+    },
+    "GetZentraData9": {
+      "Arguments": {
+        "serial_number": "z6-19596",
+        "min_hours": 24
+      },
+      "InvokeNext": ["AppendZentraData"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_zentra_readings"
+    },
+    "GetZentraData10": {
+      "Arguments": {
+        "serial_number": "z6-12196",
+        "min_hours": 24
+      },
+      "InvokeNext": ["AppendZentraData"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_zentra_readings"
+    },
+    "GetZentraData11": {
+      "Arguments": {
+        "serial_number": "z6-19598",
+        "min_hours": 24
+      },
+      "InvokeNext": ["AppendZentraData"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_zentra_readings"
+    },
+    "GetZentraData12": {
+      "Arguments": {
+        "serial_number": "z6-19602",
+        "min_hours": 24
+      },
+      "InvokeNext": ["AppendZentraData"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_zentra_readings"
+    },
+    "GetZentraData13": {
+      "Arguments": {
+        "serial_number": "z6-19599",
+        "min_hours": 24
+      },
+      "InvokeNext": ["AppendZentraData"],
+      "FaaSServer": "GH",
+      "Type": "Python",
+      "FunctionName": "download_zentra_readings"
+    },
     "AppendZentraData": {
       "Arguments": {
-        "serial_numbers": ["z6-19594", "z6-12196", "z6-12202"]
+        "serial_numbers": [
+          "z6-19604",
+          "z6-19594",
+          "z6-12202",
+          "z6-12197",
+          "z6-19595",
+          "z6-19603",
+          "z6-19600",
+          "z6-19597",
+          "z6-19596",
+          "z6-12196",
+          "z6-19598",
+          "z6-19602",
+          "z6-19599"
+        ]
       },
       "InvokeNext": [],
       "FaaSServer": "GH",
@@ -68,6 +196,16 @@
     "GetZentraData1": "ghcr.io/faasr/github-actions-python:latest",
     "GetZentraData2": "ghcr.io/faasr/github-actions-python:latest",
     "GetZentraData3": "ghcr.io/faasr/github-actions-python:latest",
+    "GetZentraData4": "ghcr.io/faasr/github-actions-python:latest",
+    "GetZentraData5": "ghcr.io/faasr/github-actions-python:latest",
+    "GetZentraData6": "ghcr.io/faasr/github-actions-python:latest",
+    "GetZentraData7": "ghcr.io/faasr/github-actions-python:latest",
+    "GetZentraData8": "ghcr.io/faasr/github-actions-python:latest",
+    "GetZentraData9": "ghcr.io/faasr/github-actions-python:latest",
+    "GetZentraData10": "ghcr.io/faasr/github-actions-python:latest",
+    "GetZentraData11": "ghcr.io/faasr/github-actions-python:latest",
+    "GetZentraData12": "ghcr.io/faasr/github-actions-python:latest",
+    "GetZentraData13": "ghcr.io/faasr/github-actions-python:latest",
     "AppendZentraData": "ghcr.io/faasr/github-actions-python:latest"
   },
   "FunctionInvoke": "NoOp",
