@@ -1,12 +1,5 @@
 {
   "ActionList": {
-    "NoOp": {
-      "Arguments": {},
-      "InvokeNext": ["AppendZentraData"],
-      "FaaSServer": "GH",
-      "Type": "Python",
-      "FunctionName": "no_op"
-    },
     "AppendZentraData": {
       "Arguments": {
         "serial_numbers": ["z6-asdf"]
@@ -50,7 +43,7 @@
     "GetZentraData13": "ghcr.io/faasr/github-actions-python:latest",
     "AppendZentraData": "ghcr.io/faasr/github-actions-python:latest"
   },
-  "FunctionInvoke": "NoOp",
+  "FunctionInvoke": "AppendZentraData",
   "DefaultDataStore": "S3",
   "FunctionGitRepo": {
     "no_op": "JStover95/FaaSr-Integration-Tests/functions/Zentra",
