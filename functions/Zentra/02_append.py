@@ -33,6 +33,10 @@ def append_zentra_segment(serial_number: str):
     segment_local = "latest.csv"
     complete_name = f"{serial_number}_complete.csv"
 
+    if not _complete_file_exists(f"{segments_folder}/latest.csv"):
+        faasr_log(f"No complete file found for {serial_number}; skipping.")
+        return
+
     # 1) Download latest segment created by previous function.
     faasr_get_file(
         local_file=segment_local,
