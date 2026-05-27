@@ -2,24 +2,14 @@
   "ActionList": {
     "NoOp": {
       "Arguments": {},
-      "InvokeNext": ["GetZentraData12"],
+      "InvokeNext": ["AppendZentraData"],
       "FaaSServer": "GH",
       "Type": "Python",
       "FunctionName": "no_op"
     },
-    "GetZentraData12": {
-      "Arguments": {
-        "serial_number": "z6-19602",
-        "min_hours": 24
-      },
-      "InvokeNext": ["AppendZentraData"],
-      "FaaSServer": "GH",
-      "Type": "Python",
-      "FunctionName": "download_zentra_readings"
-    },
     "AppendZentraData": {
       "Arguments": {
-        "serial_numbers": ["z6-19602"]
+        "serial_numbers": ["z6-asdf"]
       },
       "InvokeNext": [],
       "FaaSServer": "GH",
